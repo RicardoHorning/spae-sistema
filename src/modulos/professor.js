@@ -1,37 +1,30 @@
-// src/modulos/professor.js
+export function renderAnalyticsTable(analytics = {}, candidates = []) {
+    const tbody = document.getElementById('tblStudentAnalytics');
+    if (!tbody) return;
 
-export function renderAnalyticsTable(analytics, candidates) {
-    const tableBody = document.getElementById('tblStudentAnalytics');
-    if (!tableBody) return;
-
-    const list = candidates || [];
-    if (list.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Nenhum aluno inscrito no momento.</td></tr>`;
+    if (!candidates || candidates.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Nenhum aluno inscrito no momento.</td></tr>`;
         return;
     }
 
-    let html = '';
-    list.forEach(c => {
+    tbody.innerHTML = candidates.map(c => {
+        const diag = analytics[c.id] || { score: '90%', fit: 'Adequado' };
         const isApproved = c.status === 'APPROVED';
-        const statusBadge = isApproved 
-            ? `<span style="color:var(--neon-green); font-weight:bold;">✅ Aprovado</span>` 
-            : `<span style="color:var(--accent-yellow); font-weight:bold;">⏳ Em Análise</span>`;
-            
-        const actionButton = isApproved
-            ? `<button class="btn btn-completed" disabled>Aprovado</button>`
-            : `<button class="btn btn-success" onclick="window.approveStudentAction('${c.id}')">Aprovar Cargo</button>`;
 
-        html += `
+        return `
             <tr>
-                <td><strong>${c.name}</strong><br><small style="color:var(--text-muted);">${c.phone || ''}</small></td>
+                <td><strong>${c.name}</strong><br><small style="color:var(--text-muted);">${c.email}</small></td>
                 <td>${c.role}</td>
-                <td>${c.profileLabel || 'Aderência Padrão'}</td>
-                <td><strong style="color:var(--neon-blue);">${c.fitScore || '8.0'} / 10.0</strong></td>
-                <td>${statusBadge}</td>
-                <td>${actionButton}</td>
+                <td>${diag.score}</td>
+                <td><span style="color:var(--neon-green-glow);">${diag.fit}</span></td>
+                <td>${isApproved ? '<span style="color:var(--neon-green); font-weight:bold;">Aprovado</span>' : '<span style="color:var(--accent-yellow);">Pendente</span>'}</td>
+                <td>
+                    ${isApproved 
+                        ? '<button class="btn btn-completed" disabled>✅ Aprovado</button>' 
+                        : `<button class="btn btn-success" onclick="window.approveStudentAction('${c.id}')">✔️ Aprovar Aluno</button>`
+                    }
+                </td>
             </tr>
         `;
-    });
-
-    tableBody.innerHTML = html;
+    }).join('');
 }
