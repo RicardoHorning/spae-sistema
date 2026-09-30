@@ -1,51 +1,37 @@
 // src/modulos/professor.js
 
-export const UC_COMPANIES = {
-    SST: { name: "Metalúrgica Indústria Forte S/A", sector: "Industrial Heavy", defaultBudget: 22000 },
-    LOGISTICA: { name: "LogiTech Centro de Distribuição", sector: "Armazenagem & Frete", defaultBudget: 18000 },
-    RH_ROTINAS: { name: "Nexus Serviços & Tecnologia", sector: "Corporate Services", defaultBudget: 15000 },
-    QUALIDADE: { name: "BioAlimentos S/A", sector: "Processamento de Alimentos", defaultBudget: 25000 },
-    FINANCEIRO_UC: { name: "FinCorp Consultoria Empresarial", sector: "Mercado Financeiro", defaultBudget: 30000 }
-};
+export function renderAnalyticsTable(analytics, candidates, approveCallback) {
+    const tableBody = document.getElementById('tblStudentAnalytics');
+    if (!tableBody) return;
 
-export function renderAnalyticsTable(analytics = {}, candidates = [], onApprove) {
-    const tbody = document.getElementById('tblStudentAnalytics');
-    if (!tbody) return;
-
-    if (!analytics || Object.keys(analytics).length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Nenhum aluno em atividade.</td></tr>';
+    const list = candidates || [];
+    if (list.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Nenhum aluno inscrito no momento.</td></tr>`;
         return;
     }
 
     let html = '';
-    Object.keys(analytics).forEach(id => {
-        const a = analytics[id];
-        const cand = candidates.find(c => c.id === id) || {};
-        const mins = Math.floor((a.activeSeconds || 0) / 60);
-        const secs = (a.activeSeconds || 0) % 60;
-        let badgeClass = a.score >= 8.0 ? 'grade-high' : (a.score >= 5.0 ? 'grade-med' : 'grade-low');
-        const isApproved = cand.status === 'APPROVED';
+    list.forEach(c => {
+        const isApproved = c.status === 'APPROVED';
+        const statusBadge = isApproved 
+            ? `<span style="color:var(--neon-green); font-weight:bold;">✅ Aprovado</span>` 
+            : `<span style="color:var(--accent-yellow); font-weight:bold;">⏳ Em Análise</span>`;
+            
+        const actionButton = isApproved
+            ? `<button class="btn btn-completed" disabled>Aprovado</button>`
+            : `<button class="btn btn-success" onclick="window.approveStudentAction('${c.id}')">Aprovar Cargo</button>`;
 
         html += `
             <tr>
-                <td><strong>${a.name}</strong></td>
-                <td>${a.role || 'Assistente'}</td>
-                <td><span style="color:var(--accent-yellow); font-weight:bold;">${a.profileLabel || 'Em Análise'}</span></td>
-                <td>⏱️ ${mins}m ${secs}s</td>
-                <td>🎯 ${a.actionsCount || 0}</td>
-                <td><span class="metric-badge ${badgeClass}">${a.score || 5.0} / 10.0</span></td>
-                <td>
-                    ${isApproved ? 
-                        `<span class="metric-badge grade-high">Aprovado</span>` : 
-                        `<button class="btn btn-success" style="padding:2px 6px; font-size:0.7rem;" data-id="${id}">Aprovar Cargo</button>`
-                    }
-                </td>
+                <td><strong>${c.name}</strong><br><small style="color:var(--text-muted);">${c.phone || ''}</small></td>
+                <td>${c.role}</td>
+                <td>${c.profileLabel || 'Aderência Padrão'}</td>
+                <td><strong style="color:var(--neon-blue);">${c.fitScore || '8.0'} / 10.0</strong></td>
+                <td>${statusBadge}</td>
+                <td>${actionButton}</td>
             </tr>
         `;
     });
-    tbody.innerHTML = html;
 
-    tbody.querySelectorAll('button[data-id]').forEach(btn => {
-        btn.addEventListener('click', (e) => onApprove(e.target.getAttribute('data-id')));
-    });
+    tableBody.innerHTML = html;
 }
