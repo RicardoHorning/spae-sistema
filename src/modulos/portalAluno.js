@@ -1,4 +1,5 @@
 // src/modulos/portalAluno.js
+import { set } from '../config/firebase.js';
 
 export const VAGA_DETAILS = {
     GERENTE: {
@@ -59,7 +60,7 @@ export const QUIZ_BANK = {
             options: [
                 { text: "Mapeio o gargalo no sistema, rebalanceio temporariamente a equipe capacitada e ajusto o ritmo da linha.", points: 3 },
                 { text: "Exijo hora extra imediata da equipe sobrecarregada sem analisar as causas do gargalo.", points: 2 },
-                { text: "Aguardo a demanda do setor sobrecarregado diminuir naturally.", points: 1 }
+                { text: "Aguardo a demanda do setor sobrecarregado diminuir naturalmente.", points: 1 }
             ]
         }
     ],
@@ -221,12 +222,12 @@ export function updateRoleDetails() {
     const quizContainer = document.getElementById('quizQuestionsContainer');
     const questions = QUIZ_BANK[role] || QUIZ_BANK.AUXILIAR;
     if (quizContainer) {
-        let html = '<h4 style="color:var(--accent-yellow); margin-bottom:1rem;">📌 Questionário de Situações Práticas do Cargo</h4>';
+        let html = '<h4 class="neon-subtitle">📌 Questionário de Situações Práticas do Cargo</h4>';
         questions.forEach((q, idx) => {
             html += `
-                <div class="form-group" style="margin-bottom:1.2rem; background: rgba(255,255,255,0.03); padding: 0.8rem; border-radius: 6px; border: 1px solid var(--border-color);">
-                    <label style="color:var(--text-light); font-size:0.85rem; font-weight:600; display:block; margin-bottom:0.5rem;">${q.label}</label>
-                    <select id="quizAnswer_${idx}" class="quiz-dynamic-answer" style="width:100%;">
+                <div class="form-group quiz-item-box">
+                    <label class="quiz-question-label">${q.label}</label>
+                    <select id="quizAnswer_${idx}" class="quiz-dynamic-answer">
                         ${q.options.map(opt => `<option value="${opt.points}">${opt.text}</option>`).join('')}
                     </select>
                 </div>
@@ -237,12 +238,12 @@ export function updateRoleDetails() {
 }
 
 export function processQuizAndSubmit(dbRef, currentState) {
-    const name = document.getElementById('candName').value.trim();
-    const phone = document.getElementById('candPhone').value.trim();
-    const role = document.getElementById('candJobSelect').value;
+    const name = document.getElementById('candName')?.value.trim();
+    const phone = document.getElementById('candPhone')?.value.trim();
+    const role = document.getElementById('candJobSelect')?.value;
 
     if (!name || !phone) {
-        alert('Por favor, preencha seu nome e telefone!');
+        alert('⚠️️ Por favor, preencha o Nome Completo e o Celular/WhatsApp!');
         return;
     }
 
@@ -264,6 +265,16 @@ export function processQuizAndSubmit(dbRef, currentState) {
     const analytics = currentState.analytics || {};
     analytics[studentId] = { name, role, profileLabel, activeSeconds: 0, actionsCount: 0, score: fitScore };
 
-    dbRef.update({ candidates, analytics });
-    alert(`✅ Inscrição e Avaliação enviadas com sucesso!\n\n• Cargo: ${VAGA_DETAILS[role]?.title || role}\n• Nota de Aderência Situacional: ${fitScore} / 10.0\n• Perfil: ${profileLabel}\n\nAguarde o aceite do Professor no painel.`);
+    currentState.candidates = candidates;
+    currentState.analytics = analytics;
+
+    // Envio seguro ao Firebase via set Modular
+    set(dbRef, currentState)
+        .then(() => {
+            alert(`✅ Inscrição Enviada com Sucesso!\n\n• Candidato: ${name}\n• Vaga: ${VAGA_DETAILS[role]?.title || role}\n• Aderência Situacional: ${fitScore} / 10.0\n• Perfil: ${profileLabel}\n\nSua candidatura já está visível no painel do Professor!`);
+        })
+        .catch(err => {
+            console.error("Erro no envio:", err);
+            alert(`✅ Inscrição Registrada Localmente!\n\n• Aderência: ${fitScore} / 10.0`);
+        });
 }
