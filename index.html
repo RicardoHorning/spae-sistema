@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <!-- CABEÇALHO / HUD COMPLETO (Identidade Visual da Imagem 2) -->
+    <!-- CABEÇALHO / HUD COMPLETO -->
     <header>
         <div class="logo">
             ⚡ SPAE v4.1 <span id="companyTag" class="company-tag">SIMULATOR ENGINE</span>
@@ -16,7 +16,7 @@
         <div class="hud-dashboard">
             <div class="hud-card">
                 <span class="hud-label">CAIXA EMPRESA</span>
-                <span class="hud-value" id="hudCash" style="color: var(--accent-green);">R$ 100.000,00</span>
+                <span class="hud-value" id="hudCash" style="color: var(--neon-green-glow);">R$ 100.000,00</span>
             </div>
             <div class="hud-card">
                 <span class="hud-label">ESTOQUE INSUMOS</span>
@@ -24,7 +24,7 @@
             </div>
             <div class="hud-card">
                 <span class="hud-label">ÍNDICE SLA</span>
-                <span class="hud-value" id="hudSLA" style="color: var(--accent-blue);">100%</span>
+                <span class="hud-value" id="hudSLA" style="color: var(--neon-blue);">100%</span>
             </div>
             <div class="hud-card">
                 <span class="hud-label">GARGALOS ATIVOS</span>
@@ -39,10 +39,10 @@
 
     <!-- BANNER DOURADO - GUIA DO SISTEMA (GPS) -->
     <div class="gps-banner">
-        <span>💡 <strong>GUIA DO SISTEMA:</strong> 👉 <span id="gpsText">PASSO 1: Preencha a inscrição na aba '0. Agência RH'!</span></span>
+        <span>💡 <strong>GUIA DO SISTEMA:</strong> 👉 <span id="gpsText">PASSO 1: Preencha sua inscrição e responda ao Quiz na aba '0. Agência RH'!</span></span>
     </div>
 
-    <!-- MENU DE NAVEGAÇÃO - AS 8 ABAS RESTAURADAS -->
+    <!-- MENU DE NAVEGAÇÃO - 8 ABAS -->
     <nav>
         <button id="nav-tab0" class="nav-btn active" onclick="switchTab('tab0')">💼 0. Agência RH (Inscrição)</button>
         <button id="nav-tab1" class="nav-btn" onclick="switchTab('tab1')">📊 1. Mercado & Projetos UCs (Professor)</button>
@@ -55,7 +55,7 @@
     </nav>
 
     <main>
-        <!-- ABA 0: AGÊNCIA DE RH (LAYOUT DE 2 COLUNAS DA IMAGEM 2) -->
+        <!-- ABA 0: AGÊNCIA DE RH -->
         <section id="tab0" class="panel active">
             <h2>💼 Agência de RH — Inscrição do Aluno & Seleção de Perfil</h2>
             
@@ -68,25 +68,25 @@
                 <div class="card-box">
                     <h3>📄 Dados do Candidato & Formulário de Inscrição</h3>
                     <div class="form-group">
-                        <label>Nome Completo do Aluno *</label>
+                        <label>Nome Completo do Aluno</label>
                         <input type="text" id="candName" placeholder="Ex: Rodrigo Santos">
                     </div>
                     <div class="grid-inputs">
                         <div class="form-group">
-                            <label>Data de Nascimento *</label>
+                            <label>Data de Nascimento</label>
                             <input type="date" id="candDob">
                         </div>
                         <div class="form-group">
-                            <label>Celular / WhatsApp *</label>
+                            <label>Celular / WhatsApp</label>
                             <input type="tel" id="candPhone" placeholder="(41) 99999-8888">
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>E-mail *</label>
+                        <label>E-mail</label>
                         <input type="email" id="candEmail" placeholder="aluno@email.com">
                     </div>
                     <div class="form-group">
-                        <label>Vaga de Preferência *</label>
+                        <label>Vaga de Preferência</label>
                         <select id="candJobSelect" onchange="window.updateRoleDetails()">
                             <option value="GERENTE">Diretor / Gerente Geral</option>
                             <option value="RH_SUP">Supervisor(a) de RH & Pessoas</option>
@@ -101,18 +101,18 @@
                 <div class="card-box">
                     <h3>📌 Detalhes da Vaga Selecionada</h3>
                     <div id="vagaDetailsContainer">
-                        <!-- Preenchido dinamicamente via JS -->
+                        <!-- Conteúdo inserido dinamicamente via JS -->
                     </div>
                 </div>
             </div>
 
-            <!-- BLOCO INFERIOR: QUIZ DE TRIAGEM SITUACIONAL -->
+            <!-- BLOCO INFERIOR: QUIZ SITUACIONAL COM BOTÃO PISCANTE NEON -->
             <div class="card-box" style="margin-top: 1.2rem;">
                 <h3>📋 Quiz de Triagem Situacional SENAI</h3>
                 <div id="quizQuestionsContainer">
-                    <!-- Perguntas dinâmicas carregadas via JS -->
+                    <!-- Perguntas carregadas via JS -->
                 </div>
-                <button class="btn btn-success" style="width:100%; margin-top:1.2rem; font-size:1rem;" onclick="submitCandidate()">
+                <button id="btnSubmitCand" class="btn btn-success btn-neon-pulse" style="width:100%; margin-top:1.2rem; font-size:1rem;" onclick="submitCandidate()">
                     📝 Concluir Inscrição & Enviar Avaliação
                 </button>
             </div>
@@ -129,26 +129,25 @@
                             <th>Aluno</th>
                             <th>Cargo Pretendido</th>
                             <th>Diagnóstico Quiz</th>
-                            <th>Tempo Ativo</th>
-                            <th>Ações</th>
                             <th>Aderência</th>
+                            <th>Status</th>
                             <th>Ação</th>
                         </tr>
                     </thead>
                     <tbody id="tblStudentAnalytics">
-                        <tr><td colspan="7" style="text-align:center;">Nenhum aluno em atividade.</td></tr>
+                        <tr><td colspan="6" style="text-align:center;">Nenhum aluno inscrito no momento.</td></tr>
                     </tbody>
                 </table>
             </div>
         </section>
 
-        <!-- ABAS 2 A 7 (ESTRUTURA PRONTA PARA RECEBER OS PRÓXIMOS MÓDULOS) -->
-        <section id="tab2" class="panel"><h2>👥 Setup RH & Organograma de Equipes</h2><p class="placeholder-text">Módulo em sincronização com o banco...</p></section>
-        <section id="tab3" class="panel"><h2>🏢 Gerência Geral & Painel Estratégico</h2><p class="placeholder-text">Módulo em sincronização com o banco...</p></section>
-        <section id="tab4" class="panel"><h2>📦 Compras, Cotações & Estoque Kardex</h2><p class="placeholder-text">Módulo em sincronização com o banco...</p></section>
-        <section id="tab5" class="panel"><h2>⚙️ Operação & Produção Industrial</h2><p class="placeholder-text">Módulo em sincronização com o banco...</p></section>
-        <section id="tab6" class="panel"><h2>🔍 Controle de Qualidade & SLA</h2><p class="placeholder-text">Módulo em sincronização com o banco...</p></section>
-        <section id="tab7" class="panel"><h2>💵 Financeiro, Caixas & DRE</h2><p class="placeholder-text">Módulo em sincronização com o banco...</p></section>
+        <!-- ABAS OPERACIONAIS 2 A 7 -->
+        <section id="tab2" class="panel"><h2>👥 Setup RH & Organograma de Equipes</h2><p class="placeholder-text">Módulo em sincronização...</p></section>
+        <section id="tab3" class="panel"><h2>🏢 Gerência Geral & Painel Estratégico</h2><p class="placeholder-text">Módulo em sincronização...</p></section>
+        <section id="tab4" class="panel"><h2>📦 Compras, Cotações & Estoque Kardex</h2><p class="placeholder-text">Módulo em sincronização...</p></section>
+        <section id="tab5" class="panel"><h2>⚙️ Operação & Produção Industrial</h2><p class="placeholder-text">Módulo em sincronização...</p></section>
+        <section id="tab6" class="panel"><h2>🔍 Controle de Qualidade & SLA</h2><p class="placeholder-text">Módulo em sincronização...</p></section>
+        <section id="tab7" class="panel"><h2>💵 Financeiro, Caixas & DRE</h2><p class="placeholder-text">Módulo em sincronização...</p></section>
     </main>
 
     <script type="module" src="src/main.js"></script>
