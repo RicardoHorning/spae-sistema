@@ -3,7 +3,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebas
 import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const firebaseConfig = {
-    databaseURL: "https://spae-sistema-default-rtdb.firebaseio.com" // Insira a URL do seu Firebase Realtime Database
+    databaseURL: "https://spae-sistema-default-rtdb.firebaseio.com"
 };
 
 const app = initializeApp(firebaseConfig);
