@@ -23,12 +23,12 @@
                 <span class="hud-value" id="hudInventory">10 Unid</span>
             </div>
             <div class="hud-card">
-                <span class="hud-label">ÍNDICE SLA</span>
-                <span class="hud-value" id="hudSLA" style="color: var(--neon-blue);">100%</span>
+                <span class="hud-label">PRODUTOS ACABADOS</span>
+                <span class="hud-value" id="hudFinished">0 Unid</span>
             </div>
             <div class="hud-card">
-                <span class="hud-label">GARGALOS ATIVOS</span>
-                <span class="hud-value" id="hudGargalos" style="color: var(--accent-red);">0</span>
+                <span class="hud-label">ÍNDICE SLA</span>
+                <span class="hud-value" id="hudSLA" style="color: var(--neon-blue);">100%</span>
             </div>
             <div class="hud-card">
                 <span class="hud-label">TURMA</span>
@@ -64,7 +64,6 @@
             </div>
 
             <div class="grid-2col">
-                <!-- COLUNA ESQUERDA: FORMULÁRIO DE INSCRIÇÃO -->
                 <div class="card-box">
                     <h3>📄 Dados do Candidato & Formulário de Inscrição</h3>
                     <div class="form-group">
@@ -97,22 +96,15 @@
                     </div>
                 </div>
 
-                <!-- COLUNA DIREITA: DETALHES DA VAGA SELECIONADA -->
                 <div class="card-box">
                     <h3>📌 Detalhes da Vaga Selecionada</h3>
-                    <div id="vagaDetailsContainer">
-                        <!-- Carregado dinamicamente via JS -->
-                    </div>
+                    <div id="vagaDetailsContainer"></div>
                 </div>
             </div>
 
-            <!-- BLOCO INFERIOR: QUIZ SITUACIONAL COM BOTÃO PISCANTE NEON -->
             <div class="card-box" style="margin-top: 1.2rem;">
                 <h3>📋 Quiz de Triagem Situacional SENAI</h3>
-                <div id="quizQuestionsContainer">
-                    <!-- Perguntas carregadas dinamicamente via JS -->
-                </div>
-
+                <div id="quizQuestionsContainer"></div>
                 <button id="btnSubmitCand" class="btn btn-success btn-neon-pulse" style="width:100%; margin-top:1.2rem; font-size:1rem;" onclick="submitCandidate()">
                     📝 Concluir Inscrição & Enviar Avaliação
                 </button>
@@ -142,13 +134,169 @@
             </div>
         </section>
 
-        <!-- ABAS OPERACIONAIS 2 A 7 -->
-        <section id="tab2" class="panel"><h2>👥 Setup RH & Organograma de Equipes</h2><p class="placeholder-text">Módulo em sincronização de equipe...</p></section>
-        <section id="tab3" class="panel"><h2>🏢 Gerência Geral & Painel Estratégico</h2><p class="placeholder-text">Módulo em sincronização de metas...</p></section>
-        <section id="tab4" class="panel"><h2>📦 Compras, Cotações & Estoque Kardex</h2><p class="placeholder-text">Módulo em sincronização de insumos...</p></section>
-        <section id="tab5" class="panel"><h2>⚙️ Operação & Produção Industrial</h2><p class="placeholder-text">Módulo em sincronização de ordens...</p></section>
-        <section id="tab6" class="panel"><h2>🔍 Controle de Qualidade & SLA</h2><p class="placeholder-text">Módulo em sincronização de inspeção...</p></section>
-        <section id="tab7" class="panel"><h2>💵 Financeiro, Caixas & DRE</h2><p class="placeholder-text">Módulo em sincronização do DRE...</p></section>
+        <!-- ABA 2: SETUP RH & EQUIPES -->
+        <section id="tab2" class="panel">
+            <h2>👥 Setup RH & Organograma de Equipes</h2>
+            <div class="grid-2col">
+                <div class="card-box">
+                    <h3>📋 Quadro de Funcionários Aprovados</h3>
+                    <ul id="listApprovedStaff" style="list-style:none; line-height:2.2rem; font-size:0.88rem;">
+                        <li style="color:var(--text-muted);">Aguardando aprovação de candidatos na Aba 1...</li>
+                    </ul>
+                </div>
+                <div class="card-box">
+                    <h3>⏱️ Controle de Ponto Digital & Presença</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Registre a entrada dos colaboradores para liberar a folha de pagamento e operação.</p>
+                    <div class="form-group">
+                        <label>Turno Operacional</label>
+                        <select id="pontoTurno">
+                            <option>1º Turno - Matutino</option>
+                            <option>2º Turno - Vespertino</option>
+                            <option>3º Turno - Noturno</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-success" style="width:100%;" onclick="window.registerPresence()">⏱️ Confirmar Presença da Equipe</button>
+                    <div id="pontoStatus" style="margin-top:1rem; font-size:0.82rem; color:var(--neon-green-glow);"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA 3: GERÊNCIA GERAL -->
+        <section id="tab3" class="panel">
+            <h2>🏢 Gerência Geral & Painel Estratégico</h2>
+            <div class="grid-2col">
+                <div class="card-box">
+                    <h3>🎯 Cockpit de Metas Corporativas</h3>
+                    <ul style="line-height: 2rem; font-size: 0.88rem; color: var(--text-light); margin-left:1.2rem;">
+                        <li>Meta de Saldo em Caixa: <strong style="color:var(--neon-green-glow);">R$ 100.000,00</strong></li>
+                        <li>Meta de Atendimento SLA: <strong style="color:var(--neon-blue);">≥ 95%</strong></li>
+                        <li>Taxa de Refugo Tolerável: <strong style="color:var(--accent-red);">≤ 2%</strong></li>
+                    </ul>
+                </div>
+                <div class="card-box">
+                    <h3>📢 Mural de Comunicados Estratégicos</h3>
+                    <div class="form-group">
+                        <label>Novo Comunicado para a Fábrica</label>
+                        <textarea id="txtComunicado" rows="3" placeholder="Digite uma instrução geral para todos os setores..."></textarea>
+                    </div>
+                    <button class="btn" style="width:100%;" onclick="window.postNotice()">📢 Emitir Comunicado Geral</button>
+                    <div id="lastNotice" style="margin-top:1rem; font-size:0.82rem; color:var(--accent-yellow); font-style:italic;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA 4: COMPRAS & LOGÍSTICA -->
+        <section id="tab4" class="panel">
+            <h2>📦 Compras, Cotações & Estoque Kardex</h2>
+            <div class="grid-2col">
+                <div class="card-box">
+                    <h3>🛒 Solicitador de Matéria-Prima (Cotações)</h3>
+                    <div class="form-group">
+                        <label>Selecione o Fornecedor</label>
+                        <select id="selectSupplier" onchange="window.calcOrderCost()">
+                            <option value="500">Fornecedor A - Padrão (R$ 500,00/unid)</option>
+                            <option value="420">Fornecedor B - Econômico (R$ 420,00/unid)</option>
+                            <option value="650">Fornecedor C - Express/Premium (R$ 650,00/unid)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Quantidade de Insumos</label>
+                        <input type="number" id="buyQty" value="10" min="1" oninput="window.calcOrderCost()">
+                    </div>
+                    <div style="margin-bottom:1rem; font-size:0.9rem; font-weight:bold;">
+                        Custo Total: <span id="lblTotalCost" style="color:var(--accent-yellow);">R$ 5.000,00</span>
+                    </div>
+                    <button class="btn btn-success" style="width:100%;" onclick="window.buySupplies()">📦 Executar Ordem de Compra</button>
+                </div>
+                <div class="card-box">
+                    <h3>📊 Ficha Kardex do Almoxarifado</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Operação</th><th>Qtd</th><th>Valor Unit.</th><th>Data</th></tr>
+                        </thead>
+                        <tbody id="tblKardex">
+                            <tr><td>Estoque Inicial</td><td>10 Unid</td><td>R$ 500,00</td><td>Inicial</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA 5: OPERAÇÃO & PRODUÇÃO -->
+        <section id="tab5" class="panel">
+            <h2>⚙️ Operação & Produção Industrial</h2>
+            <div class="grid-2col">
+                <div class="card-box">
+                    <h3>🏭 Linha de Montagem de Produtos</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Consuma insumos do almoxarifado para fabricar produtos acabados.</p>
+                    <div class="form-group">
+                        <label>Quantidade a Produzir</label>
+                        <input type="number" id="prodQty" value="1" min="1">
+                    </div>
+                    <button class="btn btn-success" style="width:100%; font-size:1rem;" onclick="window.produceItem()">⚙️ Iniciar Ordem de Produção</button>
+                </div>
+                <div class="card-box">
+                    <h3>📈 Histórico de Lotes Produzidos</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Lote</th><th>Quantidade</th><th>Status</th></tr>
+                        </thead>
+                        <tbody id="tblProductionLog">
+                            <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Nenhum lote produzido nesta sessão.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA 6: QUALIDADE & SLA -->
+        <section id="tab6" class="panel">
+            <h2>🔍 Controle de Qualidade & SLA</h2>
+            <div class="grid-2col">
+                <div class="card-box">
+                    <h3>📋 Inspeção de Lotes Acabados</h3>
+                    <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1rem;">Realize o teste AQL nos produtos fabricados antes do envio final ao cliente.</p>
+                    <button class="btn" style="width:100%;" onclick="window.inspectQuality()">🔍 Executar Inspeção de Qualidade</button>
+                    <div id="inspectResult" style="margin-top:1rem; font-size:0.85rem;"></div>
+                </div>
+                <div class="card-box">
+                    <h3>🚨 Gestão de Não-Conformidades (RNC)</h3>
+                    <table>
+                        <thead>
+                            <tr><th>Código RNC</th><th>Defeito Identificado</th><th>Ação Corretiva</th></tr>
+                        </thead>
+                        <tbody id="tblRNC">
+                            <tr><td colspan="3" style="text-align:center; color:var(--text-muted);">Nenhum defeito gravado. SLA em 100%.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ABA 7: FINANCEIRO & DRE -->
+        <section id="tab7" class="panel">
+            <h2>💵 Financeiro, Caixas & DRE</h2>
+            <div class="card-box">
+                <h3>📊 Demonstrativo do Resultado do Exercício (DRE)</h3>
+                <table>
+                    <thead>
+                        <tr><th>Rubrica Financeira</th><th>Valor (R$)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td><strong>(+) Receita Operacional Bruta</strong></td><td style="color:var(--neon-green-glow);" id="dreGrossRevenue">R$ 0,00</td></tr>
+                        <tr><td><strong>(-) Custo de Aquisição de Insumos (CPV)</strong></td><td style="color:var(--accent-red);" id="dreCPV">R$ 0,00</td></tr>
+                        <tr><td><strong>(-) Custos Operacionais & Logística</strong></td><td style="color:var(--accent-red);" id="dreOpsCost">R$ 0,00</td></tr>
+                        <tr style="background:rgba(56,189,248,0.15);">
+                            <td><strong>(=) Saldo Disponível em Caixa</strong></td>
+                            <td style="color:var(--neon-blue); font-weight:bold; font-size:1.05rem;" id="dreCashVal">R$ 100.000,00</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div style="margin-top:1.2rem;">
+                    <button class="btn btn-success" style="width:100%;" onclick="window.sellFinishedGoods()">💰 Faturar Produtos Acabados no Mercado (Venda)</button>
+                </div>
+            </div>
+        </section>
     </main>
 
     <script type="module" src="src/main.js"></script>
