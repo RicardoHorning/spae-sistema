@@ -4,7 +4,7 @@ import { parseTurma } from './turmas.js';
 
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
-export const EQUIPES = { GER: 'Gerência', RH: 'RH e Pessoas', COMPRAS: 'Compras e Logística', QUALIDADE: 'Qualidade e Processos', OPERACAO: 'Operação e Produção', SEM: 'A definir' };
+export const EQUIPES = { GER: 'Gerência', RH: 'RH e Pessoas', COMPRAS: 'Compras e Logística', QUALIDADE: 'Qualidade e Processos', OPERACAO: 'Operação e Produção', FIN: 'Financeiro e Contábil', MKT: 'Marketing e Vendas', SEM: 'A definir' };
 // [nome do cargo, nível: 1 gerência, 2 supervisão, 3 auxiliar]
 export const CARGOS = {
     GERENTE: ['Diretor / Gerente Geral', 1],
@@ -24,7 +24,7 @@ function arvore(pessoas) {
     h += ger.length
         ? ger.map(p => `<div class="org-no">🏢 ${esc(p.nome)} <small>${esc(nomeCargo(p.cargo))}</small></div>`).join('')
         : '<div class="org-alerta">⚠️ Turma sem gerente</div>';
-    ['RH', 'COMPRAS', 'QUALIDADE', 'OPERACAO'].forEach(k => {
+    ['RH', 'COMPRAS', 'QUALIDADE', 'OPERACAO', 'FIN', 'MKT'].forEach(k => {
         const eq = por(p => p.equipe === k && nivel(p.cargo) !== 1);
         if (!eq.length) return;
         const sup = eq.filter(p => nivel(p.cargo) === 2);

@@ -51,17 +51,21 @@ function montarHtml({ ehProf, usuario, S }) {
         return `<tr><td title="${esc(t.desc)}"><strong>${esc(t.titulo)}</strong><br><small>${esc(t.atividade || '')}${bloq ? ' · 🔒 aguardando: ' + esc(dep.titulo) : ''}</small></td>
             <td>${esc(t.execNome)}</td><td>${esc(t.cobraNome)}</td><td>${esc(t.prazo || '')}</td>
             <td><span class="metric-badge" style="background:${ST[e][1]};color:#000">${ST[e][0]}</span></td>
-            <td>${euExec && !bloq && t.status === 'PENDENTE' ? b('Iniciar', `mudarStatus('${t.id}','ANDAMENTO')`) : ''}${euExec && !bloq && t.status !== 'CONCLUIDA' ? b('Concluir', `mudarStatus('${t.id}','CONCLUIDA')`, 'btn btn-success') : ''}${euCobra && t.status !== 'CONCLUIDA' ? b('Cobrar', `cobrarTarefa('${t.id}')`) : ''}${b('💬' + (n ? ' 🔴' + n : ''), `abrirConversa('${t.id}')`)}</td></tr>`;
+            <td>${euExec && !bloq && t.status === 'PENDENTE' ? b('Iniciar', `mudarStatus('${t.id}','ANDAMENTO')`) : ''}${euExec && !bloq && t.status !== 'CONCLUIDA' ? b('Concluir', `mudarStatus('${t.id}','CONCLUIDA')`, 'btn btn-success') : ''}${euCobra && t.status !== 'CONCLUIDA' ? b('Cobrar', `cobrarTarefa('${t.id}')`) : ''}${me.prof ? b('🗑️', `excluirTarefa('${t.id}')`) : ''}${b('💬' + (n ? ' 🔴' + n : ''), `abrirConversa('${t.id}')`)}</td></tr>`;
     }).join('') || '<tr><td colspan="6" style="text-align:center">Nenhuma tarefa por enquanto.</td></tr>';
 
     const cont = ['PENDENTE', 'ANDAMENTO', 'CONCLUIDA', 'ATRASADA'].map(k => `${ST[k][0]}: <strong>${minhas.filter(t => est(t) === k).length}</strong>`).join(' · ');
     const totalNovas = minhas.reduce((s, t) => s + novas(t.id), 0);
 
     const topo = me.prof ? `<div class="form-group"><label>Turma</label><select onchange="trocarTurmaTar(this.value)">${Object.keys(S.turmas).map(k => `<option value="${esc(k)}"${k === turma ? ' selected' : ''}>${esc(S.turmas[k].codigo)}</option>`).join('')}</select></div>` : '';
-    const gerador = me.prof ? `<div class="card-box" style="margin-bottom:1rem"><h3>⚡ Gerador de atividades (UCs piloto)</h3>
-        <div class="grid-inputs"><div class="form-group"><label>Atividade</label><select id="gModelo">${MODELOS.map(m => `<option value="${m.id}">${esc(m.titulo)} — ${esc(ucNome(m.uc))}</option>`).join('')}</select></div>
+    const ucsT = (S.turmas[turma] || {}).ucs || [];
+    const op = (m) => `<option value="${m.id}">${esc(m.titulo)} — ${esc(ucNome(m.uc))}</option>`;
+    const atividades = [...new Set(todas.map(x => x.atividade).filter(Boolean))];
+    const gerador = me.prof ? `<div class="card-box" style="margin-bottom:1rem"><h3>⚡ Gerador de atividades</h3>
+        <div class="grid-inputs"><div class="form-group"><label>Atividade</label><select id="gModelo"><optgroup label="UCs desta turma">${MODELOS.filter(m => ucsT.includes(m.uc)).map(op).join('')}</optgroup><optgroup label="Outras UCs">${MODELOS.filter(m => !ucsT.includes(m.uc)).map(op).join('')}</optgroup></select></div>
         <div class="form-group"><label>Data de início</label><input type="date" id="gInicio" value="${hoje()}"></div></div>
         <button class="btn btn-success" onclick="gerarAtividade()">Gerar tarefas para a turma</button>
+        <div class="form-group" style="margin-top:0.8rem"><label>Excluir uma atividade inteira</label><select id="gDel">${atividades.map(a => `<option>${esc(a)}</option>`).join('')}</select></div><button class="btn" onclick="excluirAtividade()">Excluir atividade</button>
         <p class="placeholder-text" style="margin-top:0.5rem">As tarefas são distribuídas pelo organograma (aba 2). Aprove os alunos e defina as equipes antes de gerar.</p></div>` : '';
     const nova = (me.prof || mn === 1 || mn === 2) ? `<div class="card-box" style="margin-bottom:1rem"><h3>➕ Nova tarefa</h3>
         ${alvos.length ? `<div class="grid-inputs"><div class="form-group"><label>Título *</label><input id="nTitulo"></div>
@@ -140,4 +144,19 @@ window.gerarAtividade = () => {
     const up = {};
     Object.keys(tarefas).forEach(id => { up[caminho(`tarefas/${C.turma}/${id}`)] = tarefas[id]; });
     gravar(up, 'Atividade gerada: ' + Object.keys(tarefas).length + ' tarefas.');
+};
+
+window.excluirTarefa = (id) => {
+    if (!confirm('Excluir esta tarefa e a conversa dela?')) return;
+    gravar({ [caminho(`tarefas/${C.turma}/${id}`)]: null, [caminho(`mensagens/${C.turma}/${id}`)]: null }, 'Tarefa excluída.');
+};
+
+window.excluirAtividade = () => {
+    const nome = document.getElementById('gDel').value;
+    if (!nome || !confirm(`Excluir todas as tarefas da atividade "${nome}"?`)) return;
+    const up = {};
+    Object.keys(C.porId).forEach(id => {
+        if (C.porId[id].atividade === nome) { up[caminho(`tarefas/${C.turma}/${id}`)] = null; up[caminho(`mensagens/${C.turma}/${id}`)] = null; }
+    });
+    gravar(up, 'Atividade excluída.');
 };

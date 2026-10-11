@@ -47,6 +47,13 @@ function updateUI() {
     $('hudCash').innerText = `R$ ${Number(S.hud.cash || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
     $('hudInventory').innerText = `${S.hud.inventory || 0} Unid`;
     $('hudSLA').innerText = `${S.hud.sla ?? 100}%`;
+    // SLA e gargalos calculados pelas tarefas (atrasadas = fora do prazo)
+    const todas = [];
+    Object.values(S.tar || {}).forEach(g => Object.values(g || {}).forEach(x => todas.push(x)));
+    const hojeS = new Date().toLocaleDateString('sv-SE');
+    const atras = todas.filter(x => x.status !== 'CONCLUIDA' && x.prazo && x.prazo < hojeS).length;
+    if (todas.length) $('hudSLA').innerText = Math.round(100 * (todas.length - atras) / todas.length) + '%';
+    $('hudGargalos').innerText = atras;
     $('hudStudents').innerText = ehProf ? `${S.candidates.length} Inscritos` : '—';
     $('nav-tab1').style.display = ehProf ? 'inline-block' : 'none';
     $('btnSair').style.display = usuario ? 'inline-block' : 'none';
