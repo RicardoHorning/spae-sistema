@@ -10,7 +10,7 @@ export const UC_COMPANIES = {
 
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-export function renderAnalyticsTable(analytics = {}, candidates = [], onApprove, onReset) {
+export function renderAnalyticsTable(analytics = {}, candidates = [], onApprove, onReset, onDelete) {
     const tbody = document.getElementById('tblStudentAnalytics');
     if (!tbody) return;
 
@@ -42,6 +42,7 @@ export function renderAnalyticsTable(analytics = {}, candidates = [], onApprove,
                         `<button class="btn btn-success" style="padding:2px 6px; font-size:0.7rem;" data-id="${id}">Aprovar Cargo</button>`
                     }
                 <button class="btn" style="padding:2px 6px; font-size:0.7rem; margin-left:4px;" data-reset="${id}">Nova senha</button>
+                    <button class="btn" style="padding:2px 6px; font-size:0.7rem; margin-left:4px; background:var(--accent-red); color:#fff;" data-del="${id}">Excluir</button>
                 </td>
             </tr>
         `;
@@ -53,5 +54,8 @@ export function renderAnalyticsTable(analytics = {}, candidates = [], onApprove,
     });
     tbody.querySelectorAll('button[data-reset]').forEach(btn => {
         btn.addEventListener('click', (e) => onReset(e.target.getAttribute('data-reset')));
+    });
+    tbody.querySelectorAll('button[data-del]').forEach(btn => {
+        btn.addEventListener('click', (e) => onDelete(e.target.getAttribute('data-del')));
     });
 }

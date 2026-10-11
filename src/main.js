@@ -67,7 +67,7 @@ function updateUI() {
         txt = 'Aluno conectado' + (S.eu ? ': ' + S.eu.name : '') + st;
     }
     $('loginState').innerText = txt;
-    renderAnalyticsTable(S.analytics, S.candidates, approveStudent, resetSenha);
+    renderAnalyticsTable(S.analytics, S.candidates, approveStudent, resetSenha, excluirAluno);
     renderTurmasPanel($('turmasPanel'), S.turmas, ehProf);
     renderEquipes($('equipesPanel'), { ehProf, usuario, S });
     $('nav-tabTarefas').style.display = (ehProf || (usuario && S.eu && S.eu.status === 'APPROVED')) ? 'inline-block' : 'none';
@@ -82,6 +82,28 @@ function approveStudent(id) {
     if (t) up['spae_state_v4/organograma/' + t.chave + '/' + id] = { nome: c.name, cargo: c.role, equipe: equipePadrao(c.role) };
     update(ref(db), up)
         .then(() => alert(`Aluno ${c.name} aprovado!`))
+        .catch(() => alert('Sem permissão. Entre como professor.'));
+}
+
+function excluirAluno(id) {
+    const c = S.candidates.find(x => x.id === id) || {};
+    const a = S.analytics[id] || {};
+    const nome = c.name || a.name || id;
+    if (!confirm(`Excluir ${nome} do sistema?\n\nSerão apagados: inscrição, nota do quiz e posição no organograma. As tarefas dele ficam "sem responsável".\nA conta de login (e-mail) continua no Firebase.`)) return;
+    const base = 'spae_state_v4/';
+    const up = { [base + 'candidates/' + id]: null, [base + 'analytics/' + id]: null };
+    const t = parseTurma(c.turma || a.turma);
+    if (t) {
+        up[base + 'organograma/' + t.chave + '/' + id] = null;
+        const tar = (S.tar || {})[t.chave] || {};
+        Object.keys(tar).forEach(k => {
+            const p = base + `tarefas/${t.chave}/${k}/`;
+            if (tar[k].exec === id) { up[p + 'exec'] = ''; up[p + 'execNome'] = 'Sem responsável'; }
+            if (tar[k].cobra === id) { up[p + 'cobra'] = 'PROF'; up[p + 'cobraNome'] = 'Professor (Mercado)'; }
+        });
+    }
+    update(ref(db), up)
+        .then(() => alert(nome + ' foi excluído do sistema.'))
         .catch(() => alert('Sem permissão. Entre como professor.'));
 }
 

@@ -1,5 +1,5 @@
 // src/modulos/portalAluno.js
-import { db, ref, update, auth, createUserWithEmailAndPassword } from '../config/firebase.js';
+import { db, ref, update, auth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from '../config/firebase.js';
 import { parseTurma } from './turmas.js';
 
 const shuffle = (a) => [...a].sort(() => Math.random() - 0.5);
@@ -293,10 +293,16 @@ export async function processQuizAndSubmit() {
     try {
         studentId = (await createUserWithEmailAndPassword(auth, email, senha)).user.uid;
     } catch (err) {
-        alert(err.code === 'auth/email-already-in-use'
-            ? 'Este e-mail já tem cadastro. Use "Entrar" ou "Esqueci minha senha" no topo da página.'
-            : 'Não foi possível criar sua conta. Confira o e-mail e a senha.');
-        return;
+        if (err.code === 'auth/email-already-in-use') {
+            // conta já existe (por exemplo, o professor excluiu a inscrição): entra com a mesma senha e refaz a inscrição
+            try { studentId = (await signInWithEmailAndPassword(auth, email, senha)).user.uid; } catch (e2) {
+                alert('Este e-mail já tem cadastro. Use "Entrar" ou "Esqueci minha senha" no topo da página.');
+                return;
+            }
+        } else {
+            alert('Não foi possível criar sua conta. Confira o e-mail e a senha.');
+            return;
+        }
     }
     const base = 'spae_state_v4/';
     try {
@@ -305,7 +311,7 @@ export async function processQuizAndSubmit() {
             [base + 'analytics/' + studentId]: { name, role, turma: turma.codigo, profileLabel, activeSeconds: 0, actionsCount: 0, score: fitScore }
         });
     } catch (err) {
-        alert('Sua conta foi criada, mas a inscrição não foi enviada. Avise o professor.');
+        alert('Não foi possível enviar a inscrição. Se você já se inscreveu, use "Entrar" no topo da página.');
         return;
     }
     alert(`✅ Inscrição e Avaliação enviadas com sucesso!\n\n• Cargo: ${VAGA_DETAILS[role]?.title || role}\n• Nota de Aderência Situacional: ${fitScore} / 10.0\n• Perfil: ${profileLabel}\n\nAguarde o aceite do Professor no painel.`);
