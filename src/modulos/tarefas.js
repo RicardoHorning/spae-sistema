@@ -1,7 +1,7 @@
 // src/modulos/tarefas.js — tarefas com status, cobrança, comunicador por tarefa e gerador de atividades
 import { db, ref, update } from '../config/firebase.js';
 import { CARGOS } from './equipes.js';
-import { MODELOS, montar } from './gerador.js';
+import { MODELOS, EVENTOS, montar } from './gerador.js';
 import { ucNome } from './catalogo.js';
 
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -12,6 +12,8 @@ const ST = { PENDENTE: ['Pendente', '#facc15'], ANDAMENTO: ['Em andamento', '#38
 const lidoMap = () => { try { return JSON.parse(localStorage.getItem('spae_lido') || '{}'); } catch (e) { return {}; } };
 const marcaLido = (id) => { try { const m = lidoMap(); m[id] = Date.now(); localStorage.setItem('spae_lido', JSON.stringify(m)); } catch (e) { /* sem armazenamento */ } };
 
+export const turmaAtual = () => turmaSel;
+const avisosHtml = (a) => a.map(x => `<div class="alert-box">📣 <strong>${esc(x.titulo)}</strong> — ${esc(x.texto)}</div>`).join('');
 let turmaSel = '', aberta = '', abertaAnt = '', ultima = '', elRef = null, ctxRef = null, C = null;
 
 function montarHtml({ ehProf, usuario, S }) {
@@ -65,7 +67,8 @@ function montarHtml({ ehProf, usuario, S }) {
         <div class="grid-inputs"><div class="form-group"><label>Atividade</label><select id="gModelo"><optgroup label="UCs desta turma">${MODELOS.filter(m => ucsT.includes(m.uc)).map(op).join('')}</optgroup><optgroup label="Outras UCs">${MODELOS.filter(m => !ucsT.includes(m.uc)).map(op).join('')}</optgroup></select></div>
         <div class="form-group"><label>Data de início</label><input type="date" id="gInicio" value="${hoje()}"></div></div>
         <button class="btn btn-success" onclick="gerarAtividade()">Gerar tarefas para a turma</button>
-        <div class="form-group" style="margin-top:0.8rem"><label>Excluir uma atividade inteira</label><select id="gDel">${atividades.map(a => `<option>${esc(a)}</option>`).join('')}</select></div><button class="btn" onclick="excluirAtividade()">Excluir atividade</button>
+        <div class="form-group" style="margin-top:1rem"><label>📣 Evento de mercado (gera atividades e avisa a turma)</label><select id="eEvento">${EVENTOS.map(e => `<option value="${e.id}">${esc(e.titulo)}</option>`).join('')}</select></div><button class="btn" onclick="dispararEvento()">Disparar evento</button>
+        <div class="form-group" style="margin-top:1rem"><label>Excluir uma atividade inteira</label><select id="gDel">${atividades.map(a => `<option>${esc(a)}</option>`).join('')}</select></div><button class="btn" onclick="excluirAtividade()">Excluir atividade</button>
         <p class="placeholder-text" style="margin-top:0.5rem">As tarefas são distribuídas pelo organograma (aba 2). Aprove os alunos e defina as equipes antes de gerar.</p></div>` : '';
     const nova = (me.prof || mn === 1 || mn === 2) ? `<div class="card-box" style="margin-bottom:1rem"><h3>➕ Nova tarefa</h3>
         ${alvos.length ? `<div class="grid-inputs"><div class="form-group"><label>Título *</label><input id="nTitulo"></div>
@@ -84,7 +87,8 @@ function montarHtml({ ehProf, usuario, S }) {
             <textarea id="tMsg" placeholder="Escreva sua mensagem..."></textarea><button class="btn btn-success" style="margin-top:0.5rem" onclick="enviarMsg()">Enviar</button>
             <button class="btn" style="margin:0.5rem 0 0 0.5rem" onclick="abrirConversa('')">Fechar</button></div>`;
     }
-    return `${topo}${gerador}${nova}<div class="card-box"><h3>✅ Tarefas ${totalNovas ? `<span style="color:#ef4444">· 🔴 ${totalNovas} mensagem(ns) nova(s)</span>` : ''}</h3>
+    const avs = Object.values((S.avs || {})[turma] || {}).sort((a, b) => b.ts - a.ts).slice(0, 3);
+    return `${topo}${avisosHtml(avs)}${gerador}${nova}<div class="card-box"><h3>✅ Tarefas ${totalNovas ? `<span style="color:#ef4444">· 🔴 ${totalNovas} mensagem(ns) nova(s)</span>` : ''}</h3>
         <p class="placeholder-text">${cont}</p><table><thead><tr><th>Tarefa</th><th>Executa</th><th>Cobra</th><th>Prazo</th><th>Status</th><th>Ações</th></tr></thead><tbody>${linhas}</tbody></table></div>${conversa}`;
 }
 
@@ -92,7 +96,7 @@ export function renderTarefas(el, ctx) {
     if (!el) return;
     elRef = el; ctxRef = ctx;
     const { ehProf, usuario, S } = ctx;
-    const sig = JSON.stringify([ehProf, !!usuario, S.tar, S.msg, S.org, S.eu && S.eu.status, turmaSel, aberta, Object.keys(S.turmas || {}), hoje()]);
+    const sig = JSON.stringify([ehProf, !!usuario, S.tar, S.msg, S.org, S.avs, S.eu && S.eu.status, turmaSel, aberta, Object.keys(S.turmas || {}), hoje()]);
     if (sig === ultima) return;
     ultima = sig;
     const rascunho = abertaAnt === aberta ? ((document.getElementById('tMsg') || {}).value || '') : '';
@@ -106,10 +110,10 @@ const redesenhar = () => { ultima = ''; if (elRef && ctxRef) renderTarefas(elRef
 const caminho = (suf) => 'spae_state_v4/' + suf;
 const gravar = (up, ok) => update(ref(db), up).then(() => ok && alert(ok)).catch(() => alert('Não foi possível salvar. Confira seu acesso.'));
 
-window.trocarTurmaTar = (v) => { turmaSel = v; aberta = ''; redesenhar(); };
+window.trocarTurmaTar = (v) => { turmaSel = v; aberta = ''; redesenhar(); if (window.__atualizar) window.__atualizar(); };
 window.abrirConversa = (id) => { aberta = id; redesenhar(); };
 
-window.mudarStatus = (id, st) => gravar({ [caminho(`tarefas/${C.turma}/${id}/status`)]: st });
+window.mudarStatus = (id, st) => gravar({ [caminho(`tarefas/${C.turma}/${id}/status`)]: st, [caminho(`tarefas/${C.turma}/${id}/concluidaEm`)]: st === 'CONCLUIDA' ? Date.now() : null });
 
 window.enviarMsg = () => {
     const texto = (document.getElementById('tMsg').value || '').trim();
@@ -132,7 +136,7 @@ window.criarTarefa = () => {
     const id = 'T' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
     gravar({ [caminho(`tarefas/${C.turma}/${id}`)]: {
         titulo: v('nTitulo'), desc: v('nDesc'), atividade: '', exec: exec.uid, execNome: exec.nome,
-        cobra: C.me.uid, cobraNome: C.me.nome, prazo: v('nPrazo'), status: 'PENDENTE', depende: v('nDep'), criada: Date.now()
+        cobra: C.me.uid, cobraNome: C.me.nome, prazo: v('nPrazo'), status: 'PENDENTE', depende: v('nDep'), criada: Date.now(), equipe: exec.equipe || ''
     } }, 'Tarefa criada.');
 };
 
@@ -159,4 +163,18 @@ window.excluirAtividade = () => {
         if (C.porId[id].atividade === nome) { up[caminho(`tarefas/${C.turma}/${id}`)] = null; up[caminho(`mensagens/${C.turma}/${id}`)] = null; }
     });
     gravar(up, 'Atividade excluída.');
+};
+
+window.dispararEvento = () => {
+    const ev = EVENTOS.find(e => e.id === document.getElementById('eEvento').value);
+    if (!ev || !C.pessoas.length) return alert('Aprove alunos e monte as equipes (aba 2) antes de disparar um evento.');
+    if (!confirm('Disparar "' + ev.titulo + '" para a turma?')) return;
+    const up = {};
+    ev.modelos.forEach(id => {
+        const m = MODELOS.find(x => x.id === id);
+        const { tarefas } = montar(m, C.pessoas, hoje());
+        Object.keys(tarefas).forEach(k => { up[caminho(`tarefas/${C.turma}/${k}`)] = tarefas[k]; });
+    });
+    up[caminho(`avisos/${C.turma}/A${Date.now().toString(36)}`)] = { titulo: ev.titulo, texto: ev.texto, ts: Date.now() };
+    gravar(up, 'Evento disparado: ' + ev.titulo);
 };

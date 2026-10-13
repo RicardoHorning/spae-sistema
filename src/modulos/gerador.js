@@ -65,10 +65,22 @@ MODELOS.push(
     A('UC28', 'Expedição com picking', LOG, 'COMPRAS', [[3, 1, 'Separar os itens do pedido (picking)', 'Separar os itens e conferir a quantidade.'], [2, 3, 'Embalar e emitir a documentação', 'Embalar e emitir nota e romaneio.'], [1, 4, 'Liberar o carregamento', 'Autorizar a saída e acompanhar o despacho.']])
 );
 
+// Efeito padrão (caixa em R$, estoque em unidades) aplicado quando a última tarefa da atividade é concluída
+const EF = { RH: { caixa: -15000 }, FIN: { caixa: 8000 }, MKT: { caixa: 10000 }, COMPRAS: { caixa: -5000, estoque: 40 }, QUALIDADE: { caixa: -2000 }, OPERACAO: { caixa: -3000, estoque: 20 } };
+MODELOS.find(m => m.uc === 'UC28').ef = { caixa: 12000, estoque: -30 };
+
+export const EVENTOS = [
+    { id: 'PEDIDO', titulo: 'Pedido grande de um cliente', texto: 'Um cliente fez um pedido acima do normal. Atendam, separem e entreguem no prazo.', modelos: ['UC09', 'UC28'] },
+    { id: 'AUDITORIA', titulo: 'Auditoria de qualidade', texto: 'Há uma auditoria marcada para esta semana. Organizem a área e tratem as não conformidades.', modelos: ['UC22', 'QUALIDADE'] },
+    { id: 'FORNECEDOR', titulo: 'Atraso de fornecedor', texto: 'Um fornecedor atrasou a entrega. Reorganizem o abastecimento e o estoque.', modelos: ['UC24', 'UC27'] },
+    { id: 'FECHAMENTO', titulo: 'Fechamento do mês', texto: 'É hora de fechar o mês: folha de pagamento e resultado financeiro.', modelos: ['FOLHA', 'UC10'] },
+    { id: 'SEGURANCA', titulo: 'Inspeção de segurança', texto: 'A empresa será inspecionada. Verifiquem riscos e uso de EPI.', modelos: ['UC03'] }
+];
+
 const nivel = (c) => (CARGOS[c] || [])[1];
 
 export function montar(m, pessoas, inicio) {
-    const base = Date.now().toString(36);
+    const base = Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36);
     const ids = m.passos.map((_, i) => 'T' + base + i);
     const usados = {};
     const exec = m.passos.map(([, , nv, eq]) => {
@@ -81,21 +93,22 @@ export function montar(m, pessoas, inicio) {
     });
     const gerente = pessoas.find(p => nivel(p.cargo) === 1);
     const tarefas = {}, faltas = [];
-    m.passos.forEach(([titulo, desc, , , dias, dep], i) => {
+    m.passos.forEach(([titulo, desc, nv, eq, dias, dep], i) => {
         const e = exec[i];
         if (!e) faltas.push(titulo);
         const prox = m.passos.findIndex(p => p[5] === i);
-        const nv = (p) => (p ? nivel(p.cargo) : 9);
+        const nvl = (p) => (p ? nivel(p.cargo) : 9);
         const prof = { uid: 'PROF', nome: 'Professor (Mercado)' };
         // cobra quem recebe o trabalho depois, se tiver cargo mais alto; senão o gerente (ou o professor, se o executor for o gerente)
-        const c = prox >= 0 && exec[prox] && nv(exec[prox]) < nv(e) ? exec[prox] : (e && nv(e) === 1 ? prof : (gerente || prof));
+        const c = prox >= 0 && exec[prox] && nvl(exec[prox]) < nvl(e) ? exec[prox] : (e && nvl(e) === 1 ? prof : (gerente || prof));
         const d = new Date(inicio + 'T12:00:00');
         d.setDate(d.getDate() + dias);
         tarefas[ids[i]] = {
             titulo, desc: `[${m.empresa}] ${desc}`, atividade: m.titulo,
             exec: e ? e.uid : '', execNome: e ? e.nome : 'Sem responsável',
             cobra: c.uid, cobraNome: c.nome, prazo: d.toLocaleDateString('sv-SE'),
-            status: 'PENDENTE', depende: dep === null ? '' : ids[dep], criada: Date.now()
+            status: 'PENDENTE', depende: dep === null ? '' : ids[dep], criada: Date.now(), uc: m.uc, equipe: nv === 1 ? 'GER' : eq,
+            ...(i === m.passos.length - 1 ? { efeito: m.ef || EF[m.passos[0][3]] || {} } : {})
         };
     });
     return { tarefas, faltas };

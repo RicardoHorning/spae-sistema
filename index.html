@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPAE v4.6.1 - Simulador Prático SENAI</title>
+    <title>SPAE v4.8 - Simulador Prático SENAI</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
     <!-- CABEÇALHO / HUD COMPLETO (Identidade Visual da Imagem 2) -->
     <header>
         <div class="logo">
-            ⚡ SPAE v4.6.1 <span id="companyTag" class="company-tag">SIMULATOR ENGINE</span>
+            ⚡ SPAE v4.8 <span id="companyTag" class="company-tag">SIMULATOR ENGINE</span>
         </div>
         <div class="hud-dashboard">
             <div class="hud-card">
@@ -177,16 +177,16 @@
 
         <!-- ABAS 2 A 7 (ESTRUTURA PRONTA PARA RECEBER OS PRÓXIMOS MÓDULOS) -->
         <section id="tab2" class="panel"><h2>👥 Setup RH & Organograma de Equipes</h2><div id="equipesPanel"></div></section>
-        <section id="tab3" class="panel"><h2>🏢 Gerência Geral & Painel Estratégico</h2><p class="placeholder-text">🚧 Em construção — disponível em breve</p></section>
-        <section id="tab4" class="panel"><h2>📦 Compras, Cotações & Estoque Kardex</h2><p class="placeholder-text">🚧 Em construção — disponível em breve</p></section>
-        <section id="tab5" class="panel"><h2>⚙️ Operação & Produção Industrial</h2><p class="placeholder-text">🚧 Em construção — disponível em breve</p></section>
-        <section id="tab6" class="panel"><h2>🔍 Controle de Qualidade & SLA</h2><p class="placeholder-text">🚧 Em construção — disponível em breve</p></section>
-        <section id="tab7" class="panel"><h2>💵 Financeiro, Caixas & DRE</h2><p class="placeholder-text">🚧 Em construção — disponível em breve</p></section>
+        <section id="tab3" class="panel"><h2>🏢 Gerência Geral & Painel Estratégico</h2><div id="mesa3"></div></section>
+        <section id="tab4" class="panel"><h2>📦 Compras, Cotações & Estoque Kardex</h2><div id="mesa4"></div></section>
+        <section id="tab5" class="panel"><h2>⚙️ Operação & Produção Industrial</h2><div id="mesa5"></div></section>
+        <section id="tab6" class="panel"><h2>🔍 Controle de Qualidade & SLA</h2><div id="mesa6"></div></section>
+        <section id="tab7" class="panel"><h2>💵 Financeiro, Caixas & DRE</h2><div id="mesa7"></div></section>
 
         <section id="tabTarefas" class="panel"><h2>✅ Tarefas &amp; Comunicação</h2><div id="tarefasPanel"></div></section>
 
         <section id="tabManual" class="panel manual">
-            <h2>📖 Manual de uso — SPAE v4.6.1</h2>
+            <h2>📖 Manual de uso — SPAE v4.8</h2>
             <p class="placeholder-text">O SPAE é um simulador de empresa para a Aprendizagem do SENAI. Cada aluno assume um cargo, e o professor define a UC (unidade curricular) que a turma está trabalhando. Este manual é atualizado a cada versão.</p>
             <div class="card-box" style="margin-top:1rem">
                 <h3>👩‍🎓 Para o aluno</h3>
@@ -200,7 +200,9 @@
                     <p>Depois de aprovado, abra a aba <strong>2. Setup RH &amp; Equipes</strong>. Ela mostra o seu cargo, a sua equipe e o organograma da turma: professor (Mercado), gerente, supervisores e auxiliares de cada área.</p></details>
                 <details><summary>5. Minhas tarefas e mensagens</summary>
                     <p>Na aba <strong>Tarefas &amp; Comunicação</strong> você vê as tarefas que executa e as que cobra, com prazo e status (pendente, em andamento, concluída ou atrasada). Use <strong>Iniciar</strong> e <strong>Concluir</strong> nas suas tarefas. Uma tarefa com 🔒 só libera quando a anterior for concluída. O botão <strong>Cobrar</strong> manda um aviso a quem executa, e o botão <strong>💬</strong> abre a conversa da tarefa. Gerentes passam tarefas aos supervisores, e supervisores aos auxiliares da sua equipe.</p></details>
-                <details><summary>6. Dúvidas comuns</summary>
+                <details><summary>6. Mesas de trabalho</summary>
+                    <p>As abas 3 a 7 mostram a mesa de cada área: a equipe, as tarefas, o status e o resultado das tarefas concluídas. Os números <strong>Caixa</strong> e <strong>Estoque</strong> do topo mudam quando as tarefas são concluídas. A aba 3 mostra o painel da empresa inteira e os avisos do Mercado.</p></details>
+                <details><summary>7. Dúvidas comuns</summary>
                     <ul><li><strong>"Este e-mail já tem cadastro":</strong> você já se inscreveu. Use Entrar ou Esqueci minha senha.</li><li><strong>"Código da turma inválido":</strong> confira as letras, os traços e a barra do código.</li><li>A nota do quiz mostra a sua aderência ao cargo. Ela não é nota de prova.</li></ul></details>
             </div>
             <div class="card-box" style="margin-top:1rem">
@@ -219,10 +221,14 @@
                     <p>Na aba <strong>Tarefas &amp; Comunicação</strong> você escolhe a turma, vê todas as tarefas com o status, cobra os responsáveis e conversa dentro de cada tarefa. Também pode criar uma tarefa avulsa para qualquer aluno.</p></details>
                 <details><summary>7. Gerador de atividades</summary>
                     <p>Escolha a atividade (uma para cada UC do catálogo), a data de início e clique em <strong>Gerar tarefas para a turma</strong>. O sistema monta a cadeia de tarefas e entrega cada uma ao aluno certo, conforme cargo e equipe no organograma. Antes de gerar, aprove os alunos e defina as equipes na aba 2. Para limpar testes, use 🗑️ em uma tarefa ou "Excluir atividade". O Índice SLA e os Gargalos do topo vêm das tarefas (atrasadas = fora do prazo).</p></details>
-                <details><summary>8. Senha de aluno</summary>
+                <details><summary>8. Eventos de mercado</summary>
+                    <p>Na aba <strong>Tarefas &amp; Comunicação</strong>, escolha um evento (pedido grande, auditoria, atraso de fornecedor, fechamento do mês, inspeção de segurança) e clique em <strong>Disparar evento</strong>. O sistema gera as atividades e envia um aviso à turma.</p></details>
+                <details><summary>9. Relatório de desempenho</summary>
+                    <p>Na aba <strong>3. Gerência Geral</strong> você vê, por aluno, as tarefas concluídas, no prazo e atrasadas, e o resumo por UC. O botão <strong>Baixar planilha (CSV)</strong> abre no Excel. É um apoio à avaliação e não substitui a avaliação oficial.</p></details>
+                <details><summary>10. Senha de aluno</summary>
                     <p>Clique em <strong>Nova senha</strong> na linha do aluno: ele recebe por e-mail um link para criar outra. Você nunca vê a senha de ninguém.</p></details>
             </div>
-            <p class="placeholder-text" style="margin-top:1rem">Em breve: mesas de trabalho de cada área (abas 3 a 7).</p>
+            <p class="placeholder-text" style="margin-top:1rem">Em breve: editor de atividades, atividades integradas e ajustes finais.</p>
         </section>
     </main>
 

@@ -4,9 +4,10 @@ import { updateRoleDetails, processQuizAndSubmit, VAGA_DETAILS } from './modulos
 import { renderAnalyticsTable } from './modulos/professor.js';
 import { renderTurmasPanel, parseTurma } from './modulos/turmas.js';
 import { renderEquipes, equipePadrao } from './modulos/equipes.js';
-import { renderTarefas } from './modulos/tarefas.js';
+import { renderTarefas, turmaAtual } from './modulos/tarefas.js';
+import { renderMesas } from './modulos/mesas.js';
 
-const S = { hud: { cash: 100000, inventory: 10, sla: 100 }, candidates: [], analytics: {}, turmas: {}, eu: null, org: {}, tar: {}, msg: {} };
+const S = { hud: { cash: 100000, inventory: 10, sla: 100 }, candidates: [], analytics: {}, turmas: {}, eu: null, org: {}, tar: {}, msg: {}, avs: {} };
 let usuario = null;
 let ehProf = false;
 let ouvintes = [];
@@ -24,7 +25,8 @@ function ouvirProfessor() {
         onValue(refPath('turmas'), (s) => { S.turmas = s.val() || {}; updateUI(); }),
         onValue(refPath('organograma'), (s) => { S.org = s.val() || {}; updateUI(); }),
         onValue(refPath('tarefas'), (s) => { S.tar = s.val() || {}; updateUI(); }),
-        onValue(refPath('mensagens'), (s) => { S.msg = s.val() || {}; updateUI(); })
+        onValue(refPath('mensagens'), (s) => { S.msg = s.val() || {}; updateUI(); }),
+        onValue(refPath('avisos'), (s) => { S.avs = s.val() || {}; updateUI(); })
     ];
 }
 
@@ -36,6 +38,7 @@ function ouvirAluno(uid) {
             orgChave = ch;
             ouvintes.push(onValue(refPath('organograma/' + ch), (o) => { S.org = { [ch]: o.val() || {} }; updateUI(); }, () => {}));
             ouvintes.push(onValue(refPath('tarefas/' + ch), (o) => { S.tar = { [ch]: o.val() || {} }; updateUI(); }, () => {}));
+            ouvintes.push(onValue(refPath('avisos/' + ch), (o) => { S.avs = { [ch]: o.val() || {} }; updateUI(); }, () => {}));
             ouvintes.push(onValue(refPath('mensagens/' + ch), (o) => { S.msg = { [ch]: o.val() || {} }; updateUI(); }, () => {}));
         }
         updateUI();
@@ -48,12 +51,16 @@ function updateUI() {
     $('hudInventory').innerText = `${S.hud.inventory || 0} Unid`;
     $('hudSLA').innerText = `${S.hud.sla ?? 100}%`;
     // SLA e gargalos calculados pelas tarefas (atrasadas = fora do prazo)
-    const todas = [];
-    Object.values(S.tar || {}).forEach(g => Object.values(g || {}).forEach(x => todas.push(x)));
+    const chaves = ehProf ? [turmaAtual()].filter(Boolean) : Object.keys(S.tar || {});
+    const lista = [];
+    chaves.forEach(k => Object.values((S.tar || {})[k] || {}).forEach(x => lista.push(x)));
     const hojeS = new Date().toLocaleDateString('sv-SE');
-    const atras = todas.filter(x => x.status !== 'CONCLUIDA' && x.prazo && x.prazo < hojeS).length;
-    if (todas.length) $('hudSLA').innerText = Math.round(100 * (todas.length - atras) / todas.length) + '%';
+    const atras = lista.filter(x => x.status !== 'CONCLUIDA' && x.prazo && x.prazo < hojeS).length;
+    const soma = (k) => lista.filter(x => x.status === 'CONCLUIDA' && x.efeito).reduce((s, x) => s + (Number(x.efeito[k]) || 0), 0);
+    if (lista.length) $('hudSLA').innerText = Math.round(100 * (lista.length - atras) / lista.length) + '%';
     $('hudGargalos').innerText = atras;
+    $('hudCash').innerText = `R$ ${(Number(S.hud.cash || 0) + soma('caixa')).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    $('hudInventory').innerText = `${(Number(S.hud.inventory) || 0) + soma('estoque')} Unid`;
     $('hudStudents').innerText = ehProf ? `${S.candidates.length} Inscritos` : '—';
     $('nav-tab1').style.display = ehProf ? 'inline-block' : 'none';
     $('btnSair').style.display = usuario ? 'inline-block' : 'none';
@@ -72,6 +79,7 @@ function updateUI() {
     renderEquipes($('equipesPanel'), { ehProf, usuario, S });
     $('nav-tabTarefas').style.display = (ehProf || (usuario && S.eu && S.eu.status === 'APPROVED')) ? 'inline-block' : 'none';
     renderTarefas($('tarefasPanel'), { ehProf, usuario, S });
+    renderMesas({ ehProf, usuario, S });
 }
 
 function approveStudent(id) {
@@ -120,7 +128,7 @@ onAuthStateChanged(auth, (u) => {
     if (ouvProf) { ouvProf(); ouvProf = null; }
     parar();
     usuario = u; ehProf = false;
-    S.candidates = []; S.analytics = {}; S.turmas = {}; S.eu = null; S.org = {}; S.tar = {}; S.msg = {};
+    S.candidates = []; S.analytics = {}; S.turmas = {}; S.eu = null; S.org = {}; S.tar = {}; S.msg = {}; S.avs = {};
     if (!u) { window.switchTab('tab0'); updateUI(); return; }
     ouvProf = onValue(ref(db, 'professores/' + u.uid), (s) => {
         parar();
@@ -154,4 +162,5 @@ window.switchTab = (tabId) => {
     if (targetNav) targetNav.classList.add('active');
 };
 
+window.__atualizar = updateUI;
 updateRoleDetails();
