@@ -255,10 +255,14 @@ export async function processQuizAndSubmit() {
         return;
     }
     if (!turma) {
-        alert('Informe o código da turma no formato APB-V-G00270/2025.');
+        alert('Escolha a sua turma na lista. Se ela não aparecer, avise o professor.');
         return;
     }
 
+    if (!document.getElementById('candAceite').checked) {
+        alert('Para se inscrever, leia e marque o aviso de privacidade.');
+        return;
+    }
     const email = document.getElementById('candEmail').value.trim().toLowerCase();
     const senha = document.getElementById('candSenha').value;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email !== document.getElementById('candEmail2').value.trim().toLowerCase()) {
@@ -306,10 +310,8 @@ export async function processQuizAndSubmit() {
     }
     const base = 'spae_state_v4/';
     try {
-        await update(ref(db), {
-            [base + 'candidates/' + studentId]: { id: studentId, name, phone, email, role, turma: turma.codigo, turmaChave: turma.chave, profileLabel, fitScore, status: 'PENDING' },
-            [base + 'analytics/' + studentId]: { name, role, turma: turma.codigo, profileLabel, activeSeconds: 0, actionsCount: 0, score: fitScore }
-        });
+        const rec = { id: studentId, name, phone, email, role, turma: turma.codigo, turmaChave: turma.chave, profileLabel, fitScore, score: fitScore, activeSeconds: 0, actionsCount: 0, status: 'PENDING' };
+        await update(ref(db), { [base + 'inscritos/' + turma.chave + '/' + studentId]: rec, [base + 'alunos/' + studentId]: { turmaChave: turma.chave } });
     } catch (err) {
         alert('Não foi possível enviar a inscrição. Se você já se inscreveu, use "Entrar" no topo da página.');
         return;

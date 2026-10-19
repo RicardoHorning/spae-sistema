@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPAE v4.8 - Simulador Prático SENAI</title>
+    <title>SPAE v5.1 - Simulador Prático SENAI</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
     <!-- CABEÇALHO / HUD COMPLETO (Identidade Visual da Imagem 2) -->
     <header>
         <div class="logo">
-            ⚡ SPAE v4.8 <span id="companyTag" class="company-tag">SIMULATOR ENGINE</span>
+            ⚡ SPAE v5.1 <span id="companyTag" class="company-tag">SIMULATOR ENGINE</span>
         </div>
         <div class="hud-dashboard">
             <div class="hud-card">
@@ -46,6 +46,8 @@
     <nav>
         <button id="nav-tab0" class="nav-btn active" onclick="switchTab('tab0')">💼 0. Agência RH (Inscrição)</button>
         <button id="nav-tab1" class="nav-btn" onclick="switchTab('tab1')">📊 1. Mercado & Projetos UCs (Professor)</button>
+        <button id="nav-tabTurmas" class="nav-btn" style="display:none" onclick="switchTab('tabTurmas')">🏫 Turmas</button>
+        <button id="nav-tabProfs" class="nav-btn" style="display:none" onclick="switchTab('tabProfs')">👩‍🏫 Professores</button>
         <button id="nav-tab2" class="nav-btn" onclick="switchTab('tab2')">👥 2. Setup RH & Equipes</button>
         <button id="nav-tab3" class="nav-btn" onclick="switchTab('tab3')">🏢 3. Gerência Geral</button>
         <button id="nav-tab4" class="nav-btn" onclick="switchTab('tab4')">📦 4. Compras & Logística</button>
@@ -113,9 +115,11 @@
                         </div>
                     </div>
                     <p class="placeholder-text" style="margin-bottom:0.8rem">A senha precisa ter 8 ou mais caracteres, com letra, número e símbolo (ex.: @ # !).</p>
+                    <div class="alert-box" style="font-size:0.78rem">🔒 <strong>Privacidade:</strong> seu nome, celular e e-mail são usados apenas nesta atividade escolar do SENAI, ficam visíveis ao professor da turma e não são compartilhados. Alunos menores de 18 anos devem ter ciência do responsável. Para apagar seus dados, fale com o professor.<br>
+                    <label style="display:flex;gap:8px;margin-top:0.5rem;color:#fef08a"><input type="checkbox" id="candAceite" style="width:auto"> Li e concordo com o aviso de privacidade.</label></div>
                     <div class="form-group">
-                        <label>Código da Turma *</label>
-                        <input type="text" id="candTurma" placeholder="APB-V-G00270/2025">
+                        <label>Turma *</label>
+                        <select id="candTurma"><option value="">Selecione a sua turma...</option></select>
                     </div>
                     <div class="form-group">
                         <label>Vaga de Preferência *</label>
@@ -153,7 +157,7 @@
         <!-- ABA 1: PROFESSOR & ANALYTICS -->
         <section id="tab1" class="panel">
             <h2>📊 Mercado & Projetos UCs (Painel do Professor)</h2>
-            <div id="turmasPanel" class="card-box" style="margin-bottom:1.2rem"></div>
+            
             <div class="card-box">
                 <h3>Prontuário e Desempenho dos Alunos em Tempo Real</h3>
                 <table>
@@ -183,15 +187,19 @@
         <section id="tab6" class="panel"><h2>🔍 Controle de Qualidade & SLA</h2><div id="mesa6"></div></section>
         <section id="tab7" class="panel"><h2>💵 Financeiro, Caixas & DRE</h2><div id="mesa7"></div></section>
 
+        <section id="tabTurmas" class="panel"><h2>🏫 Turmas</h2><div id="turmasPanel"></div></section>
+
+        <section id="tabProfs" class="panel"><h2>👩‍🏫 Professores</h2><div id="profsPanel"></div></section>
+
         <section id="tabTarefas" class="panel"><h2>✅ Tarefas &amp; Comunicação</h2><div id="tarefasPanel"></div></section>
 
         <section id="tabManual" class="panel manual">
-            <h2>📖 Manual de uso — SPAE v4.8</h2>
+            <h2>📖 Manual de uso — SPAE v5.1</h2>
             <p class="placeholder-text">O SPAE é um simulador de empresa para a Aprendizagem do SENAI. Cada aluno assume um cargo, e o professor define a UC (unidade curricular) que a turma está trabalhando. Este manual é atualizado a cada versão.</p>
             <div class="card-box" style="margin-top:1rem">
                 <h3>👩‍🎓 Para o aluno</h3>
                 <details><summary>1. Como me inscrever</summary>
-                    <ol><li>Abra a aba <strong>0. Agência RH</strong>.</li><li>Preencha nome completo (nome e sobrenome, só letras), data de nascimento, celular e o <strong>e-mail do SENAI</strong> (digite duas vezes).</li><li>Informe o <strong>código da turma</strong>, no formato APB-V-G00270/2025. Seu professor passa esse código.</li><li>Crie sua <strong>senha</strong>: 8 ou mais caracteres, com letra, número e símbolo.</li><li>Escolha a vaga, responda <strong>todas</strong> as perguntas do quiz e clique em <strong>Concluir Inscrição</strong>.</li></ol></details>
+                    <ol><li>Abra a aba <strong>0. Agência RH</strong>.</li><li>Preencha nome completo (nome e sobrenome, só letras), data de nascimento, celular e o <strong>e-mail do SENAI</strong> (digite duas vezes).</li><li>Escolha a sua <strong>turma</strong> na lista. Se ela não aparecer, avise o professor.</li><li>Crie sua <strong>senha</strong>: 8 ou mais caracteres, com letra, número e símbolo.</li><li>Escolha a vaga, responda <strong>todas</strong> as perguntas do quiz e clique em <strong>Concluir Inscrição</strong>.</li></ol></details>
                 <details><summary>2. Como entrar depois</summary>
                     <p>Use o e-mail e a senha no topo da página e clique em <strong>Entrar</strong>. O topo mostra a sua situação: aguardando aprovação ou aprovado no cargo.</p></details>
                 <details><summary>3. Esqueci minha senha</summary>
@@ -209,10 +217,10 @@
                 <h3>👨‍🏫 Para o professor</h3>
                 <details><summary>1. Entrar</summary>
                     <p>Use o e-mail e a senha de professor no topo. A aba <strong>1. Mercado &amp; Projetos UCs</strong> aparece só para você.</p></details>
-                <details><summary>2. Cadastrar a turma e as UCs</summary>
-                    <ol><li>Digite o código da turma.</li><li>Escolha o curso (ou "Os dois cursos") para ver as UCs.</li><li>Marque as UCs da turma. As marcadas ficam guardadas ao trocar de curso.</li><li>Clique em <strong>Salvar turma</strong>. Para mudar depois, use <strong>Editar UCs</strong>.</li></ol></details>
-                <details><summary>3. Importar a lista de alunos</summary>
-                    <p>Escolha o PDF do diário de classe (inteiro) e clique em <strong>Importar PDF</strong>. O sistema lê o código da turma e os alunos, e pede a sua confirmação. A leitura é feita no seu navegador, e só ficam salvos matrícula, nome e situação.</p></details>
+                <details><summary>2. Turmas (aba 🏫 Turmas)</summary>
+                    <p>Digite o código (APB-V-G00270/2025): o sistema mostra modalidade, turno e ano de início. Escolha o curso, marque as UCs da turma e clique em <strong>Salvar turma</strong>. A lista mostra cada turma com status, alunos e UCs, e permite <strong>Editar UCs</strong>, <strong>Encerrar/Reativar</strong> (turma encerrada não aceita inscrição), <strong>Exportar</strong> (planilha), <strong>Limpar testes</strong> e <strong>Excluir</strong> (só turmas sem alunos). Os alunos escolhem a turma numa lista na inscrição.</p></details>
+                <details><summary>3. Importar turma e alunos pelo PDF</summary>
+                    <p>Na aba 🏫 Turmas, escolha o PDF do diário de classe (inteiro) e clique em <strong>Importar PDF</strong>. O sistema lê a turma (código, turno, curso e período) e os alunos, mostra o resumo e pede confirmação. A turma é cadastrada se não existir, e os alunos já importados não são duplicados. A leitura é feita no seu navegador.</p></details>
                 <details><summary>4. Acompanhar e aprovar</summary>
                     <p>A tabela mostra cada aluno, a turma, o cargo pretendido, o diagnóstico do quiz e a aderência. <strong>Aprovar Cargo</strong> confirma o aluno no cargo. O botão vermelho <strong>Excluir</strong> remove o aluno do sistema (inscrição, nota do quiz e posição no organograma); as tarefas dele ficam sem responsável. A conta de login continua no Firebase, e o aluno pode refazer a inscrição com o mesmo e-mail e senha.</p></details>
                 <details><summary>5. Equipes e organograma</summary>
@@ -225,7 +233,9 @@
                     <p>Na aba <strong>Tarefas &amp; Comunicação</strong>, escolha um evento (pedido grande, auditoria, atraso de fornecedor, fechamento do mês, inspeção de segurança) e clique em <strong>Disparar evento</strong>. O sistema gera as atividades e envia um aviso à turma.</p></details>
                 <details><summary>9. Relatório de desempenho</summary>
                     <p>Na aba <strong>3. Gerência Geral</strong> você vê, por aluno, as tarefas concluídas, no prazo e atrasadas, e o resumo por UC. O botão <strong>Baixar planilha (CSV)</strong> abre no Excel. É um apoio à avaliação e não substitui a avaliação oficial.</p></details>
-                <details><summary>10. Senha de aluno</summary>
+                <details><summary>10. Professores e escolas (administrador)</summary>
+                    <p>Só o administrador vê a aba <strong>👩‍🏫 Professores</strong>. Cadastre nome, e-mail e escola: o professor recebe um e-mail para criar a própria senha. Cada professor enxerga <strong>apenas as turmas que ele cadastrou</strong>; o administrador vê todas. Para <strong>Desativar</strong>, o professor perde o acesso, e os dados dele ficam guardados. Turmas de outras escolas aceitam códigos livres (letras, números, espaço, barra e traço).</p></details>
+                <details><summary>11. Senha de aluno</summary>
                     <p>Clique em <strong>Nova senha</strong> na linha do aluno: ele recebe por e-mail um link para criar outra. Você nunca vê a senha de ninguém.</p></details>
             </div>
             <p class="placeholder-text" style="margin-top:1rem">Em breve: editor de atividades, atividades integradas e ajustes finais.</p>

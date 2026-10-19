@@ -4,7 +4,7 @@ import { getDatabase, ref, onValue, set, update, child } from "https://www.gstat
 
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-const firebaseConfig = {
+export const firebaseConfig = {
     apiKey: "AIzaSyAF2iJb2M94ULFzXKTwSINYs6571pTfLb0",
     authDomain: "spae-v3.firebaseapp.com",
     projectId: "spae-v3",
@@ -19,4 +19,4 @@ export const db = getDatabase(app);
 export const auth = getAuth(app);
 export const dbRef = ref(db, 'spae_state_v4');
 export const refPath = (p) => ref(db, 'spae_state_v4/' + p);
-export { ref, onValue, set, update, child, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged };
+export { initializeApp, getAuth, ref, onValue, set, update, child, signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, signOut, onAuthStateChanged };

@@ -129,3 +129,18 @@ textarea { min-height:110px; font-family:monospace; }
 .msg { background:var(--panel-bg); border:1px solid var(--border-color); border-radius:6px; padding:0.45rem 0.7rem; margin:0.4rem 0; font-size:0.85rem; white-space:pre-wrap; }
 .msg small { color:var(--text-muted); }
 .msg-eu { border-color:var(--accent-blue); margin-left:2rem; }
+
+/* v5.0 - celular */
+table { display:block; overflow-x:auto; }
+@media (max-width: 700px) {
+  header { padding:0.6rem 0.8rem; }
+  .hud-dashboard { width:100%; }
+  main { padding:0.6rem; }
+  .panel { padding:0.9rem; }
+  .grid-inputs { grid-template-columns:1fr; }
+  .login-bar { padding:0.5rem 0.8rem; }
+  .login-bar input, #loginCampos { width:100%; }
+  input, select, textarea { font-size:16px; }
+  .btn { padding:0.6rem 0.9rem; }
+  .nav-btn { font-size:0.78rem; }
+}

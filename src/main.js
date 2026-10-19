@@ -6,42 +6,76 @@ import { renderTurmasPanel, parseTurma } from './modulos/turmas.js';
 import { renderEquipes, equipePadrao } from './modulos/equipes.js';
 import { renderTarefas, turmaAtual } from './modulos/tarefas.js';
 import { renderMesas } from './modulos/mesas.js';
+import { renderProfessores } from './modulos/professores.js';
 
-const S = { hud: { cash: 100000, inventory: 10, sla: 100 }, candidates: [], analytics: {}, turmas: {}, eu: null, org: {}, tar: {}, msg: {}, avs: {} };
-let usuario = null;
-let ehProf = false;
-let ouvintes = [];
-let ouvProf = null;
+const S = { hud: { cash: 100000, inventory: 10, sla: 100 }, candidates: [], analytics: {}, turmas: {}, inscr: {}, eu: null, org: {}, tar: {}, msg: {}, avs: {}, ativas: {}, perfis: {}, perfil: null };
+let usuario = null, ehProf = false, ehAdmin = false, ouvintes = [], ouvProf = null, orgChave = null;
+const porTurma = {};
+const h = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+onValue(refPath('turmasAtivas'), (s) => { S.ativas = s.val() || {}; updateUI(); }, () => {});
 onValue(refPath('hud'), (s) => { if (s.val()) S.hud = { ...S.hud, ...s.val() }; updateUI(); }, () => {});
 
-let orgChave = null;
-function parar() { ouvintes.forEach(f => f()); ouvintes = []; orgChave = null; }
+function recalc() {
+    S.candidates = []; S.analytics = {};
+    Object.values(S.inscr).forEach(g => Object.values(g || {}).forEach(r => { S.candidates.push(r); S.analytics[r.id] = r; }));
+}
 
-function ouvirProfessor() {
-    ouvintes = [
-        onValue(refPath('candidates'), (s) => { S.candidates = Object.values(s.val() || {}); updateUI(); }),
-        onValue(refPath('analytics'), (s) => { S.analytics = s.val() || {}; updateUI(); }),
-        onValue(refPath('turmas'), (s) => { S.turmas = s.val() || {}; updateUI(); }),
-        onValue(refPath('organograma'), (s) => { S.org = s.val() || {}; updateUI(); }),
-        onValue(refPath('tarefas'), (s) => { S.tar = s.val() || {}; updateUI(); }),
-        onValue(refPath('mensagens'), (s) => { S.msg = s.val() || {}; updateUI(); }),
-        onValue(refPath('avisos'), (s) => { S.avs = s.val() || {}; updateUI(); })
+function resetS() {
+    Object.assign(S, { candidates: [], analytics: {}, turmas: {}, inscr: {}, eu: null, org: {}, tar: {}, msg: {}, avs: {}, perfis: {}, perfil: null });
+    orgChave = null;
+}
+
+function soltarTurma(k) {
+    (porTurma[k] || []).forEach(f => f());
+    delete porTurma[k];
+    ['turmas', 'inscr', 'org', 'tar', 'msg', 'avs'].forEach(n => delete S[n][k]);
+    recalc();
+}
+
+function parar() {
+    ouvintes.forEach(f => f());
+    ouvintes = [];
+    Object.keys(porTurma).forEach(soltarTurma);
+}
+
+// Professor: escuta apenas as turmas dele (o administrador escuta todas)
+function ouvirTurma(k) {
+    if (porTurma[k]) return;
+    const on = (nome, fn) => onValue(refPath(nome + '/' + k), (s) => { fn(s.val() || {}); updateUI(); }, () => {});
+    porTurma[k] = [
+        onValue(refPath('turmas/' + k), (s) => { if (s.val()) S.turmas[k] = s.val(); else delete S.turmas[k]; updateUI(); }, () => {}),
+        on('inscritos', v => { S.inscr[k] = v; recalc(); }),
+        on('organograma', v => { S.org[k] = v; }),
+        on('tarefas', v => { S.tar[k] = v; }),
+        on('mensagens', v => { S.msg[k] = v; }),
+        on('avisos', v => { S.avs[k] = v; })
     ];
 }
 
-function ouvirAluno(uid) {
-    ouvintes = [onValue(refPath('candidates/' + uid), (s) => {
-        S.eu = s.val();
-        const ch = S.eu && S.eu.turmaChave;
-        if (ch && orgChave !== ch) {
-            orgChave = ch;
-            ouvintes.push(onValue(refPath('organograma/' + ch), (o) => { S.org = { [ch]: o.val() || {} }; updateUI(); }, () => {}));
-            ouvintes.push(onValue(refPath('tarefas/' + ch), (o) => { S.tar = { [ch]: o.val() || {} }; updateUI(); }, () => {}));
-            ouvintes.push(onValue(refPath('avisos/' + ch), (o) => { S.avs = { [ch]: o.val() || {} }; updateUI(); }, () => {}));
-            ouvintes.push(onValue(refPath('mensagens/' + ch), (o) => { S.msg = { [ch]: o.val() || {} }; updateUI(); }, () => {}));
-        }
+function ouvirProfessor(uid) {
+    ouvintes.push(onValue(ehAdmin ? refPath('turmas') : refPath('turmasDoProf/' + uid), (s) => {
+        const ks = Object.keys(s.val() || {});
+        Object.keys(porTurma).filter(k => !ks.includes(k)).forEach(soltarTurma);
+        ks.forEach(ouvirTurma);
         updateUI();
+    }, () => {}));
+    ouvintes.push(onValue(ref(db, 'perfis/' + uid), (s) => { S.perfil = s.val(); window.__perfil = S.perfil; updateUI(); }, () => {}));
+    if (ehAdmin) ouvintes.push(onValue(ref(db, 'perfis'), (s) => { S.perfis = s.val() || {}; updateUI(); }, () => {}));
+}
+
+// Aluno: descobre a turma pelo ponteiro e escuta só o que é dele
+function ouvirAluno(uid) {
+    ouvintes = [onValue(refPath('alunos/' + uid), (s) => {
+        const ch = s.val() && s.val().turmaChave;
+        if (!ch || orgChave === ch) return;
+        orgChave = ch;
+        const on = (nome, fn) => ouvintes.push(onValue(refPath(nome + '/' + ch), (o) => { fn(o.val() || {}); updateUI(); }, () => {}));
+        ouvintes.push(onValue(refPath('inscritos/' + ch + '/' + uid), (o) => { S.eu = o.val(); updateUI(); }, () => {}));
+        on('organograma', v => { S.org = { [ch]: v }; });
+        on('tarefas', v => { S.tar = { [ch]: v }; });
+        on('mensagens', v => { S.msg = { [ch]: v }; });
+        on('avisos', v => { S.avs = { [ch]: v }; });
     }, () => {})];
 }
 
@@ -50,7 +84,6 @@ function updateUI() {
     $('hudCash').innerText = `R$ ${Number(S.hud.cash || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
     $('hudInventory').innerText = `${S.hud.inventory || 0} Unid`;
     $('hudSLA').innerText = `${S.hud.sla ?? 100}%`;
-    // SLA e gargalos calculados pelas tarefas (atrasadas = fora do prazo)
     const chaves = ehProf ? [turmaAtual()].filter(Boolean) : Object.keys(S.tar || {});
     const lista = [];
     chaves.forEach(k => Object.values((S.tar || {})[k] || {}).forEach(x => lista.push(x)));
@@ -63,10 +96,12 @@ function updateUI() {
     $('hudInventory').innerText = `${(Number(S.hud.inventory) || 0) + soma('estoque')} Unid`;
     $('hudStudents').innerText = ehProf ? `${S.candidates.length} Inscritos` : '—';
     $('nav-tab1').style.display = ehProf ? 'inline-block' : 'none';
+    $('nav-tabTurmas').style.display = ehProf ? 'inline-block' : 'none';
+    $('nav-tabProfs').style.display = ehAdmin ? 'inline-block' : 'none';
     $('btnSair').style.display = usuario ? 'inline-block' : 'none';
     $('loginCampos').style.display = usuario ? 'none' : 'flex';
     let txt = 'Acesso (aluno ou professor):';
-    if (ehProf) txt = 'Professor conectado';
+    if (ehProf) txt = (ehAdmin ? 'Administrador conectado' : 'Professor conectado') + (S.perfil ? ': ' + S.perfil.nome : '');
     else if (usuario) {
         const st = !S.eu ? '' : (S.eu.status === 'APPROVED'
             ? ` — aprovado como ${(VAGA_DETAILS[S.eu.role] || {}).title || S.eu.role}`
@@ -75,7 +110,13 @@ function updateUI() {
     }
     $('loginState').innerText = txt;
     renderAnalyticsTable(S.analytics, S.candidates, approveStudent, resetSenha, excluirAluno);
-    renderTurmasPanel($('turmasPanel'), S.turmas, ehProf);
+    renderTurmasPanel($('turmasPanel'), S.turmas, ehProf, S.candidates);
+    renderProfessores($('profsPanel'), { ehAdmin, S });
+    const sel = $('candTurma');
+    if (sel) {
+        const html = '<option value="">Selecione a sua turma...</option>' + Object.values(S.ativas).map(t => `<option value="${h(t.codigo)}">${h(t.codigo)} — ${h(t.turno)}${t.escola ? ' — ' + h(t.escola) : ''}</option>`).join('');
+        if (sel.dataset.h !== html) { const v = sel.value; sel.innerHTML = html; sel.dataset.h = html; sel.value = v; }
+    }
     renderEquipes($('equipesPanel'), { ehProf, usuario, S });
     $('nav-tabTarefas').style.display = (ehProf || (usuario && S.eu && S.eu.status === 'APPROVED')) ? 'inline-block' : 'none';
     renderTarefas($('tarefasPanel'), { ehProf, usuario, S });
@@ -84,35 +125,29 @@ function updateUI() {
 
 function approveStudent(id) {
     const c = S.candidates.find(x => x.id === id);
-    if (!c) return;
-    const t = parseTurma(c.turma);
-    const up = { ['spae_state_v4/candidates/' + id + '/status']: 'APPROVED' };
-    if (t) up['spae_state_v4/organograma/' + t.chave + '/' + id] = { nome: c.name, cargo: c.role, equipe: equipePadrao(c.role) };
-    update(ref(db), up)
-        .then(() => alert(`Aluno ${c.name} aprovado!`))
-        .catch(() => alert('Sem permissão. Entre como professor.'));
+    const t = c && parseTurma(c.turma);
+    if (!t) return;
+    update(ref(db), {
+        ['spae_state_v4/inscritos/' + t.chave + '/' + id + '/status']: 'APPROVED',
+        ['spae_state_v4/organograma/' + t.chave + '/' + id]: { nome: c.name, cargo: c.role, equipe: equipePadrao(c.role) }
+    }).then(() => alert(`Aluno ${c.name} aprovado!`)).catch(() => alert('Sem permissão. Entre como professor.'));
 }
 
 function excluirAluno(id) {
     const c = S.candidates.find(x => x.id === id) || {};
-    const a = S.analytics[id] || {};
-    const nome = c.name || a.name || id;
+    const nome = c.name || id;
+    const t = parseTurma(c.turma);
+    if (!t) return;
     if (!confirm(`Excluir ${nome} do sistema?\n\nSerão apagados: inscrição, nota do quiz e posição no organograma. As tarefas dele ficam "sem responsável".\nA conta de login (e-mail) continua no Firebase.`)) return;
     const base = 'spae_state_v4/';
-    const up = { [base + 'candidates/' + id]: null, [base + 'analytics/' + id]: null };
-    const t = parseTurma(c.turma || a.turma);
-    if (t) {
-        up[base + 'organograma/' + t.chave + '/' + id] = null;
-        const tar = (S.tar || {})[t.chave] || {};
-        Object.keys(tar).forEach(k => {
-            const p = base + `tarefas/${t.chave}/${k}/`;
-            if (tar[k].exec === id) { up[p + 'exec'] = ''; up[p + 'execNome'] = 'Sem responsável'; }
-            if (tar[k].cobra === id) { up[p + 'cobra'] = 'PROF'; up[p + 'cobraNome'] = 'Professor (Mercado)'; }
-        });
-    }
-    update(ref(db), up)
-        .then(() => alert(nome + ' foi excluído do sistema.'))
-        .catch(() => alert('Sem permissão. Entre como professor.'));
+    const up = { [base + 'inscritos/' + t.chave + '/' + id]: null, [base + 'alunos/' + id]: null, [base + 'organograma/' + t.chave + '/' + id]: null };
+    const tar = (S.tar || {})[t.chave] || {};
+    Object.keys(tar).forEach(k => {
+        const p = base + `tarefas/${t.chave}/${k}/`;
+        if (tar[k].exec === id) { up[p + 'exec'] = ''; up[p + 'execNome'] = 'Sem responsável'; }
+        if (tar[k].cobra === id) { up[p + 'cobra'] = 'PROF'; up[p + 'cobraNome'] = 'Professor (Mercado)'; }
+    });
+    update(ref(db), up).then(() => alert(nome + ' foi excluído do sistema.')).catch(() => alert('Sem permissão. Entre como professor.'));
 }
 
 function resetSenha(id) {
@@ -126,14 +161,14 @@ function resetSenha(id) {
 
 onAuthStateChanged(auth, (u) => {
     if (ouvProf) { ouvProf(); ouvProf = null; }
-    parar();
-    usuario = u; ehProf = false;
-    S.candidates = []; S.analytics = {}; S.turmas = {}; S.eu = null; S.org = {}; S.tar = {}; S.msg = {}; S.avs = {};
+    parar(); resetS();
+    usuario = u; ehProf = false; ehAdmin = false;
     if (!u) { window.switchTab('tab0'); updateUI(); return; }
     ouvProf = onValue(ref(db, 'professores/' + u.uid), (s) => {
-        parar();
-        ehProf = s.exists();
-        if (ehProf) ouvirProfessor(); else ouvirAluno(u.uid);
+        parar(); resetS();
+        const v = s.val();
+        ehProf = v !== null; ehAdmin = v === 1;
+        if (ehProf) ouvirProfessor(u.uid); else ouvirAluno(u.uid);
         updateUI();
     }, () => { parar(); ehProf = false; ouvirAluno(u.uid); updateUI(); });
 });
