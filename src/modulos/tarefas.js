@@ -1,7 +1,7 @@
 // src/modulos/tarefas.js — tarefas com status, cobrança, comunicador por tarefa e gerador de atividades
 import { db, ref, update } from '../config/firebase.js';
 import { CARGOS } from './equipes.js';
-import { MODELOS, EVENTOS, montar } from './gerador.js';
+import { MODELOS, EVENTOS, montar, deCustom } from './gerador.js';
 import { ucNome } from './catalogo.js';
 
 const esc = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -14,6 +14,7 @@ const marcaLido = (id) => { try { const m = lidoMap(); m[id] = Date.now(); local
 
 export const turmaAtual = () => turmaSel;
 const avisosHtml = (a) => a.map(x => `<div class="alert-box">📣 <strong>${esc(x.titulo)}</strong> — ${esc(x.texto)}</div>`).join('');
+let MODS = MODELOS;
 let turmaSel = '', aberta = '', abertaAnt = '', ultima = '', elRef = null, ctxRef = null, C = null;
 
 function montarHtml({ ehProf, usuario, S }) {
@@ -61,10 +62,12 @@ function montarHtml({ ehProf, usuario, S }) {
 
     const topo = me.prof ? `<div class="form-group"><label>Turma</label><select onchange="trocarTurmaTar(this.value)">${Object.keys(S.turmas).map(k => `<option value="${esc(k)}"${k === turma ? ' selected' : ''}>${esc(S.turmas[k].codigo)}</option>`).join('')}</select></div>` : '';
     const ucsT = (S.turmas[turma] || {}).ucs || [];
-    const op = (m) => `<option value="${m.id}">${esc(m.titulo)} — ${esc(ucNome(m.uc))}</option>`;
+    MODS = [...MODELOS, ...Object.keys(S.modelos || {}).map(id => deCustom(id, S.modelos[id]))];
+    const noGrupo = (m) => (m.ucs || [m.uc]).some(u => ucsT.includes(u));
+    const op = (m) => `<option value="${m.id}">${m.custom ? '⭐ ' : ''}${esc(m.titulo)} — ${(m.ucs || [m.uc]).map(u => esc(ucNome(u))).join(' + ')}</option>`;
     const atividades = [...new Set(todas.map(x => x.atividade).filter(Boolean))];
     const gerador = me.prof ? `<div class="card-box" style="margin-bottom:1rem"><h3>⚡ Gerador de atividades</h3>
-        <div class="grid-inputs"><div class="form-group"><label>Atividade</label><select id="gModelo"><optgroup label="UCs desta turma">${MODELOS.filter(m => ucsT.includes(m.uc)).map(op).join('')}</optgroup><optgroup label="Outras UCs">${MODELOS.filter(m => !ucsT.includes(m.uc)).map(op).join('')}</optgroup></select></div>
+        <div class="grid-inputs"><div class="form-group"><label>Atividade</label><select id="gModelo"><optgroup label="UCs desta turma">${MODS.filter(noGrupo).map(op).join('')}</optgroup><optgroup label="Outras UCs">${MODS.filter(m => !noGrupo(m)).map(op).join('')}</optgroup></select></div>
         <div class="form-group"><label>Data de início</label><input type="date" id="gInicio" value="${hoje()}"></div></div>
         <button class="btn btn-success" onclick="gerarAtividade()">Gerar tarefas para a turma</button>
         <div class="form-group" style="margin-top:1rem"><label>📣 Evento de mercado (gera atividades e avisa a turma)</label><select id="eEvento">${EVENTOS.map(e => `<option value="${e.id}">${esc(e.titulo)}</option>`).join('')}</select></div><button class="btn" onclick="dispararEvento()">Disparar evento</button>
@@ -96,7 +99,7 @@ export function renderTarefas(el, ctx) {
     if (!el) return;
     elRef = el; ctxRef = ctx;
     const { ehProf, usuario, S } = ctx;
-    const sig = JSON.stringify([ehProf, !!usuario, S.tar, S.msg, S.org, S.avs, S.eu && S.eu.status, turmaSel, aberta, Object.keys(S.turmas || {}), hoje()]);
+    const sig = JSON.stringify([ehProf, !!usuario, S.tar, S.msg, S.org, S.avs, S.modelos, S.eu && S.eu.status, turmaSel, aberta, Object.keys(S.turmas || {}), hoje()]);
     if (sig === ultima) return;
     ultima = sig;
     const rascunho = abertaAnt === aberta ? ((document.getElementById('tMsg') || {}).value || '') : '';
@@ -141,7 +144,7 @@ window.criarTarefa = () => {
 };
 
 window.gerarAtividade = () => {
-    const m = MODELOS.find(x => x.id === document.getElementById('gModelo').value);
+    const m = MODS.find(x => x.id === document.getElementById('gModelo').value);
     if (!m || !C.pessoas.length) return alert('Aprove alunos e monte as equipes (aba 2) antes de gerar.');
     const { tarefas, faltas } = montar(m, C.pessoas, document.getElementById('gInicio').value || hoje());
     if (faltas.length && !confirm('Sem responsável para: ' + faltas.join('; ') + '. Gerar mesmo assim?')) return;

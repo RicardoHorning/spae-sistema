@@ -66,8 +66,35 @@ MODELOS.push(
 );
 
 // Efeito padrão (caixa em R$, estoque em unidades) aplicado quando a última tarefa da atividade é concluída
-const EF = { RH: { caixa: -15000 }, FIN: { caixa: 8000 }, MKT: { caixa: 10000 }, COMPRAS: { caixa: -5000, estoque: 40 }, QUALIDADE: { caixa: -2000 }, OPERACAO: { caixa: -3000, estoque: 20 } };
+export const EF = { RH: { caixa: -15000 }, FIN: { caixa: 8000 }, MKT: { caixa: 10000 }, COMPRAS: { caixa: -5000, estoque: 40 }, QUALIDADE: { caixa: -2000 }, OPERACAO: { caixa: -3000, estoque: 20 } };
 MODELOS.find(m => m.uc === 'UC28').ef = { caixa: 12000, estoque: -30 };
+
+// Atividades integradas (duas UCs). Passo: [título, descrição, nível, equipe, dias, passo anterior]
+MODELOS.push(
+    { id: 'INT01', uc: 'UC08', ucs: ['UC08', 'UC10'], titulo: 'Da folha de pagamento ao fluxo de caixa', empresa: NEX, ef: { caixa: -15000 }, passos: [
+        ['Apurar o ponto', 'Conferir ponto, faltas e horas extras do mês.', 3, 'RH', 1, null],
+        ['Calcular e fechar a folha', 'Calcular salários, INSS, IR e vale-transporte.', 2, 'RH', 3, 0],
+        ['Lançar a folha no fluxo de caixa', 'Registrar a folha como saída no caixa do mês.', 3, 'FIN', 4, 1],
+        ['Conferir a DRE do mês', 'Verificar o efeito da folha no resultado.', 2, 'FIN', 5, 2],
+        ['Aprovar o fechamento do mês', 'Aprovar a folha e o resultado do mês.', 1, 'GER', 6, 3]] },
+    { id: 'INT02', uc: 'UC26', ucs: ['UC26', 'UC18'], titulo: 'Da compra ao pagamento do fornecedor', empresa: LOG, ef: { caixa: -8000, estoque: 40 }, passos: [
+        ['Receber e conferir a mercadoria', 'Conferir nota fiscal, quantidades e avarias na doca.', 3, 'COMPRAS', 1, null],
+        ['Registrar o recebimento e armazenar', 'Dar entrada no sistema e guardar no endereço.', 2, 'COMPRAS', 2, 0],
+        ['Lançar a conta a pagar', 'Registrar a conta do fornecedor com o vencimento.', 3, 'FIN', 3, 1],
+        ['Programar o pagamento', 'Organizar o pagamento conforme o caixa.', 2, 'FIN', 4, 2],
+        ['Aprovar o pagamento', 'Autorizar o pagamento ao fornecedor.', 1, 'GER', 5, 3]] },
+    { id: 'INT03', uc: 'UC09', ucs: ['UC09', 'UC28'], titulo: 'Da venda à entrega ao cliente', empresa: BIO, ef: { caixa: 12000, estoque: -30 }, passos: [
+        ['Atender o cliente e registrar o pedido', 'Anotar produtos, prazo e condições com cordialidade.', 3, 'MKT', 1, null],
+        ['Aprovar preço e condições', 'Conferir a política de preço e o estoque.', 2, 'MKT', 2, 0],
+        ['Separar e expedir o pedido', 'Fazer o picking, embalar e emitir a documentação.', 3, 'COMPRAS', 3, 1],
+        ['Emitir a cobrança ao cliente', 'Lançar a conta a receber e emitir a cobrança.', 3, 'FIN', 4, 2],
+        ['Aprovar a entrega e o recebimento', 'Confirmar a entrega e acompanhar o pagamento.', 1, 'GER', 5, 3]] }
+);
+
+export const deCustom = (id, o) => ({
+    id, custom: true, titulo: o.titulo, empresa: o.empresa || '', uc: o.ucs ? o.ucs[0] : o.uc, ucs: o.ucs || [o.uc], ef: o.ef,
+    passos: Object.values(o.passos || {}).map((p, i) => [p.titulo, p.desc || '', Number(p.nv), Number(p.nv) === 1 ? 'GER' : p.eq, Number(p.dias) || 1, i ? i - 1 : null])
+});
 
 export const EVENTOS = [
     { id: 'PEDIDO', titulo: 'Pedido grande de um cliente', texto: 'Um cliente fez um pedido acima do normal. Atendam, separem e entreguem no prazo.', modelos: ['UC09', 'UC28'] },

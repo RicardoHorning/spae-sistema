@@ -7,8 +7,9 @@ import { renderEquipes, equipePadrao } from './modulos/equipes.js';
 import { renderTarefas, turmaAtual } from './modulos/tarefas.js';
 import { renderMesas } from './modulos/mesas.js';
 import { renderProfessores } from './modulos/professores.js';
+import { renderEditor } from './modulos/editor.js';
 
-const S = { hud: { cash: 100000, inventory: 10, sla: 100 }, candidates: [], analytics: {}, turmas: {}, inscr: {}, eu: null, org: {}, tar: {}, msg: {}, avs: {}, ativas: {}, perfis: {}, perfil: null };
+const S = { hud: { cash: 100000, inventory: 10, sla: 100 }, candidates: [], analytics: {}, turmas: {}, inscr: {}, eu: null, org: {}, tar: {}, msg: {}, avs: {}, ativas: {}, perfis: {}, perfil: null, modelos: {} };
 let usuario = null, ehProf = false, ehAdmin = false, ouvintes = [], ouvProf = null, orgChave = null;
 const porTurma = {};
 const h = (t) => String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -22,7 +23,7 @@ function recalc() {
 }
 
 function resetS() {
-    Object.assign(S, { candidates: [], analytics: {}, turmas: {}, inscr: {}, eu: null, org: {}, tar: {}, msg: {}, avs: {}, perfis: {}, perfil: null });
+    Object.assign(S, { candidates: [], analytics: {}, turmas: {}, inscr: {}, eu: null, org: {}, tar: {}, msg: {}, avs: {}, perfis: {}, perfil: null, modelos: {} });
     orgChave = null;
 }
 
@@ -61,6 +62,7 @@ function ouvirProfessor(uid) {
         updateUI();
     }, () => {}));
     ouvintes.push(onValue(ref(db, 'perfis/' + uid), (s) => { S.perfil = s.val(); window.__perfil = S.perfil; updateUI(); }, () => {}));
+    ouvintes.push(onValue(refPath('modelos/' + uid), (s) => { S.modelos = s.val() || {}; updateUI(); }, () => {}));
     if (ehAdmin) ouvintes.push(onValue(ref(db, 'perfis'), (s) => { S.perfis = s.val() || {}; updateUI(); }, () => {}));
 }
 
@@ -112,6 +114,8 @@ function updateUI() {
     renderAnalyticsTable(S.analytics, S.candidates, approveStudent, resetSenha, excluirAluno);
     renderTurmasPanel($('turmasPanel'), S.turmas, ehProf, S.candidates);
     renderProfessores($('profsPanel'), { ehAdmin, S });
+    $('nav-tabModelos').style.display = ehProf ? 'inline-block' : 'none';
+    renderEditor($('editorPanel'), { ehProf, S });
     const sel = $('candTurma');
     if (sel) {
         const html = '<option value="">Selecione a sua turma...</option>' + Object.values(S.ativas).map(t => `<option value="${h(t.codigo)}">${h(t.codigo)} — ${h(t.turno)}${t.escola ? ' — ' + h(t.escola) : ''}</option>`).join('');
